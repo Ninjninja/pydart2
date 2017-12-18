@@ -2,8 +2,10 @@ import OpenGL.GL as GL
 import OpenGL.GLU as GLU
 import OpenGL.GLUT as GLUT
 import sys
+import cv2 as cv
 import numpy as np
 from pydart2.gui.opengl.scene import OpenGLScene
+from copy import deepcopy
 
 # Some api in the chain is translating the keystrokes to this octal string
 # so instead of saying: ESCAPE = 27, we use the following.
@@ -11,8 +13,11 @@ from pydart2.gui.opengl.scene import OpenGLScene
 
 class GLUTWindow(object):
     def __init__(self, sim, title,frame_num):
-        self.sim1 = sim
+        self.sim1 = deepcopy(sim)
         self.sim = sim
+        self.skel = self.sim1.skeletons[-1]
+        #self.skel.render_with_color([0.5, 0.5, 0.5])
+        self.loc = self.skel.q
         self.title = title if title is not None else "GLUT Window"
         self.window_size = (1280, 720)
         self.scene = OpenGLScene(*self.window_size)
@@ -24,6 +29,7 @@ class GLUTWindow(object):
         self.capture_index = 0
         self.folder_name = "examples/data/captures/"
         self.stop = 0
+        self.seg_mode = 0
 
     def set_filename(self,folder_name):
         self.folder_name = folder_name
@@ -43,12 +49,18 @@ class GLUTWindow(object):
         GLUT.glutSwapBuffers()
 
     def drawGL(self, ):
-
-        self.scene.render(self.sim)
-        # GLUT.glutSolidSphere(0.3, 20, 20)  # Default object for debugging
-        GLUT.glutSwapBuffers()
-        if self.frame_num==self.capture_index:
-            return
+        if self.seg_mode == 0:
+            self.scene.render(self.sim)
+            # GLUT.glutSolidSphere(0.3, 20, 20)  # Default object for debugging
+            GLUT.glutSwapBuffers()
+            if self.frame_num == self.capture_index:
+                return
+        else:
+            GL.glDisable(GL.GL_LIGHTING)
+            #GL.glColor3f(0.0, 0.0, 1.0)
+            self.scene.render(self.sim)
+            # GLUT.glutSolidSphere(0.3, 20, 20)  # Default object for debugging
+            GLUT.glutSwapBuffers()
 
     # The function called whenever a key is pressed.
     # Note the use of Python tuples to pass in: (key, x, y)
@@ -115,9 +127,9 @@ class GLUTWindow(object):
                 self.sim.set_frame(self.frame_index)
 
     def renderTimer(self, timer):
-        if self.capture_index == self.frame_num:
-            return
-        else:
+        # if self.capture_index == self.frame_num:
+        #     return
+        # else:
             GLUT.glutPostRedisplay()
             GLUT.glutTimerFunc(20, self.renderTimer, 1)
 
@@ -129,34 +141,38 @@ class GLUTWindow(object):
         data = GL.glReadPixels(0, 0, w, h, GL.GL_RGBA, GL.GL_UNSIGNED_BYTE)
         img = Image.frombytes("RGBA", (w, h), data)
         img = img.transpose(Image.FLIP_TOP_BOTTOM)
-        filename = self.folder_name+"capture%04d.png" % self.capture_index
-        img.save(filename, 'png')
-        self.capture_index += 1
-        if self.capture_index == self.frame_num:
-            GLUT.glutDestroyWindow(self.window)
-            #self.close()
-            return
-            #self.run_seg()
-            #sys.exit()
+        if self.seg_mode == 0:
+            filename = self.folder_name+"capture%04d.png" % self.capture_index
+            img.save(filename, 'png')
+            if self.capture_index == self.frame_num:
+                self.run_seg()
+                return
+            GLUT.glutTimerFunc(5000, self.capture, 1)
         else:
-            GLUT.glutTimerFunc(100, self.capture, 1)
-
-    def capture_seg(self,timer):
-        print("capture! index seg= %d" % self.capture_index)
-        from PIL import Image
-        GL.glPixelStorei(GL.GL_PACK_ALIGNMENT, 1)
-        w, h = 1280, 720
-        data = GL.glReadPixels(0, 0, w, h, GL.GL_RGBA, GL.GL_UNSIGNED_BYTE)
-        img = Image.frombytes("RGBA", (w, h), data)
-        img = img.transpose(Image.FLIP_TOP_BOTTOM)
-        filename = self.folder_name+"capture_seg%04d.png" % self.capture_index
-        img.save(filename, 'png')
-        #self.capture_index += 1
-        if self.frame_num == self.capture_index:
-            GLUT.glutDestroyWindow(self.window)
+            mass = self.skel.bodynodes[0].mass()*50
+            cimg = np.array(img)
+            idx = cimg[:, :, 0] < 100
+            cimg[idx, 0] = mass
+            cimg[idx, 1] = mass
+            cimg[idx, 2] = mass
+            cimg[~idx, 0] = 0
+            cimg[~idx, 1] = 0
+            cimg[~idx, 2] = 0
+            img = Image.fromarray(cimg)
+            filename = self.folder_name + "capture_seg%04d.png" % self.capture_index
+            img.save(filename, 'png')
+            if self.capture_index == self.frame_num:
+                GLUT.glutDestroyWindow(self.window)
+            else:
+                GLUT.glutTimerFunc(5000, self.capture, 1)
+        self.capture_index += 1
+        # if self.capture_index == self.frame_num:
+            #GLUT.glutDestroyWindow(self.window)
+            #self.close()
+            #return
+            # self.run_seg()
             #sys.exit()
-
-        GLUT.glutTimerFunc(100, self.capture_seg, 1)
+        # else:
 
     def close(self):
         self.stop = 1
@@ -184,61 +200,65 @@ class GLUTWindow(object):
         # Init functions
         # glutFullScreen()
         GLUT.glutDisplayFunc(self.drawGL)
-        GLUT.glutWMCloseFunc(self.close)
+        # GLUT.glutWMCloseFunc(self.close)
         GLUT.glutIdleFunc(self.idle)
         GLUT.glutReshapeFunc(self.resizeGL)
         GLUT.glutKeyboardFunc(self.keyPressed)
         GLUT.glutMouseFunc(self.mouseFunc)
         GLUT.glutMotionFunc(self.motionFunc)
-        GLUT.glutTimerFunc(25, self.renderTimer, 1)
+        GLUT.glutTimerFunc(10, self.renderTimer, 1)
         GLUT.glutTimerFunc(100, self.capture, 1)
-
-        GLUT.glutSetOption(GLUT.GLUT_ACTION_ON_WINDOW_CLOSE,
-                           GLUT.GLUT_ACTION_CONTINUE_EXECUTION)
-        GLUT.glutSetOption(GLUT.GLUT_ACTION_GLUTMAINLOOP_RETURNS,
-                           GLUT.GLUT_ACTION_CONTINUE_EXECUTION)
+        #
+        # GLUT.glutSetOption(GLUT.GLUT_ACTION_ON_WINDOW_CLOSE,
+        #                    GLUT.GLUT_ACTION_CONTINUE_EXECUTION)
+        # GLUT.glutSetOption(GLUT.GLUT_ACTION_GLUTMAINLOOP_RETURNS,
+        #                    GLUT.GLUT_ACTION_CONTINUE_EXECUTION)
 
 
         self.initGL(*self.window_size)
 
         # Run
-        while not self.stop:
-            GLUT.glutCheckLoop()
-        #GLUT.glutMainLoop()
+        # while not self.stop:
+        #     GLUT.glutCheckLoop()
+        GLUT.glutMainLoop()
+        #sys.exit()
         a = 5+6
         print("exited")
 
     def run_seg(self, ):
-        self.sim = self.sim1
+        self.capture_index = 0
+        self.sim = deepcopy(self.sim1)
+        #self.skel.q = self.loc
+        self.skel.set_positions(self.loc)
+        self.seg_mode = 1
         print("\n")
         print("space bar: simulation on/off")
         print("' ': run/stop simulation")
         print("'a': run/stop animation")
         print("'[' and ']': play one frame backward and forward")
-
-        # Init glut
-        GLUT.glutInit(())
-        GLUT.glutInitDisplayMode(GLUT.GLUT_RGBA |
-                                 GLUT.GLUT_DOUBLE |
-                                 GLUT.GLUT_MULTISAMPLE |
-                                 GLUT.GLUT_ALPHA |
-                                 GLUT.GLUT_DEPTH)
-
-        GLUT.glutInitWindowSize(*self.window_size)
-        GLUT.glutInitWindowPosition(0, 0)
-        self.window = GLUT.glutCreateWindow(self.title)
-
-        # Init functions
-        # glutFullScreen()
-        GLUT.glutDisplayFunc(self.drawGL_seg)
-        GLUT.glutIdleFunc(self.idle)
-        GLUT.glutReshapeFunc(self.resizeGL)
-        GLUT.glutKeyboardFunc(self.keyPressed)
-        GLUT.glutMouseFunc(self.mouseFunc)
-        GLUT.glutMotionFunc(self.motionFunc)
-        GLUT.glutTimerFunc(25, self.renderTimer, 1)
-        GLUT.glutTimerFunc(100, self.capture_seg, 1)
-        self.initGL(*self.window_size)
+        GLUT.glutTimerFunc(100, self.capture, 1)
+        # # Init glut
+        # GLUT.glutInit(())
+        # GLUT.glutInitDisplayMode(GLUT.GLUT_RGBA |
+        #                          GLUT.GLUT_DOUBLE |
+        #                          GLUT.GLUT_MULTISAMPLE |
+        #                          GLUT.GLUT_ALPHA |
+        #                          GLUT.GLUT_DEPTH)
+        #
+        # GLUT.glutInitWindowSize(*self.window_size)
+        # GLUT.glutInitWindowPosition(0, 0)
+        # self.window = GLUT.glutCreateWindow(self.title)
+        #
+        # # Init functions
+        # # glutFullScreen()
+        # GLUT.glutDisplayFunc(self.drawGL_seg)
+        # GLUT.glutIdleFunc(self.idle)
+        # GLUT.glutReshapeFunc(self.resizeGL)
+        # GLUT.glutKeyboardFunc(self.keyPressed)
+        # GLUT.glutMouseFunc(self.mouseFunc)
+        # GLUT.glutMotionFunc(self.motionFunc)
+        # GLUT.glutTimerFunc(25, self.renderTimer, 1)
+        # GLUT.glutTimerFunc(100, self.capture_seg, 1)
+        # self.initGL(*self.window_size)
 
         # Run
-        GLUT.glutMainLoop()
