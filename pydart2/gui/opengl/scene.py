@@ -1,10 +1,11 @@
 import OpenGL.GL as GL
 import OpenGL.GLU as GLU
 import OpenGL.GLUT as GLUT
-
+import cv2
+from PIL import Image
 from pydart2.gui.opengl.renderer import Renderer
 from pydart2.gui.trackball import Trackball
-
+import numpy as np
 
 class OpenGLScene(object):
     def __init__(self, width, height, window=None):
@@ -80,13 +81,19 @@ class OpenGLScene(object):
         GL.glLightfv(GL.GL_LIGHT1, GL.GL_POSITION, position1)
         GL.glEnable(GL.GL_LIGHTING)
 
-        GL.glEnable(GL.GL_COLOR_MATERIAL)
-        GL.glMaterialfv(GL.GL_FRONT_AND_BACK, GL.GL_SHININESS,
-                        front_mat_shininess)
-        GL.glMaterialfv(GL.GL_FRONT_AND_BACK, GL.GL_SPECULAR,
-                        front_mat_specular)
-        GL.glMaterialfv(GL.GL_FRONT_AND_BACK, GL.GL_DIFFUSE,
-                        front_mat_diffuse)
+        img = Image.open('texture.png').transpose(Image.FLIP_TOP_BOTTOM)
+        # img_data = np.fromstring(img.tobytes(), np.uint8)
+        id = self.renderer.gen_textures(1)
+
+        # self.renderer.bind_texture(id)
+        # self.renderer.set_texture_as_image(img)
+        #GL.glEnable(GL.GL_COLOR_MATERIAL)
+        #GL.glMaterialfv(GL.GL_FRONT_AND_BACK, GL.GL_SHININESS,
+        #                front_mat_shininess)
+        #GL.glMaterialfv(GL.GL_FRONT_AND_BACK, GL.GL_SPECULAR,
+        #                front_mat_specular)
+        #GL.glMaterialfv(GL.GL_FRONT_AND_BACK, GL.GL_DIFFUSE,
+        #                front_mat_diffuse)
 
     def resize(self, w, h):
         (self.width, self.height) = (w, h)
@@ -116,6 +123,9 @@ class OpenGLScene(object):
             sim.render()
 
         self.renderer.enable("COLOR_MATERIAL")
+        #img = cv2.imread('texture.png')
+
+
         if hasattr(sim, "render_with_ri"):
             sim.render_with_ri(self.renderer)
 
@@ -123,6 +133,7 @@ class OpenGLScene(object):
         if hasattr(sim, "draw_with_ri"):
             sim.draw_with_ri(self.renderer)
             self.renderer.draw_text([-100, -100], "")
+
         self.disable2D()
 
     def enable2D(self):

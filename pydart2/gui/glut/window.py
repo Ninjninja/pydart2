@@ -2,11 +2,12 @@ import OpenGL.GL as GL
 import OpenGL.GLU as GLU
 import OpenGL.GLUT as GLUT
 import sys
+import time
 import cv2 as cv
 import numpy as np
 from pydart2.gui.opengl.scene import OpenGLScene
 from copy import deepcopy
-
+EPSILON = sys.float_info.epsilon
 # Some api in the chain is translating the keystrokes to this octal string
 # so instead of saying: ESCAPE = 27, we use the following.
 
@@ -31,6 +32,16 @@ class GLUTWindow(object):
         self.stop = 0
         self.seg_mode = 0
 
+    def convert_to_rgb(self, minval, maxval, val, colors):
+        fi = float(val - minval) / float(maxval - minval) * (len(colors) - 1)
+        i = int(fi)
+        f = fi - i
+        if f < EPSILON:
+            return colors[i]
+        else:
+            (r1, g1, b1), (r2, g2, b2) = colors[i], colors[i + 1]
+            return int(r1 + f * (r2 - r1)), int(g1 + f * (g2 - g1)), int(b1 + f * (b2 - b1))
+
     def set_filename(self,folder_name):
         self.folder_name = folder_name
 
@@ -51,7 +62,12 @@ class GLUTWindow(object):
     def drawGL(self, ):
         if self.seg_mode == 0:
             self.scene.render(self.sim)
-            # GLUT.glutSolidSphere(0.3, 20, 20)  # Default object for debugging
+            GL.glTranslated(0.0, 0, -1)
+            GL.glColor3f(0.0, 0.0, 1.0)
+
+            GLUT.glutSolidSphere(0.02, 20, 20)  # Default object for debugging
+            #GL.glTranslated(0.0, 0, -1)
+            self.scene.renderer.draw_image(0, 0)
             GLUT.glutSwapBuffers()
             if self.frame_num == self.capture_index:
                 return
@@ -61,6 +77,7 @@ class GLUTWindow(object):
             self.scene.render(self.sim)
             # GLUT.glutSolidSphere(0.3, 20, 20)  # Default object for debugging
             GLUT.glutSwapBuffers()
+
 
     # The function called whenever a key is pressed.
     # Note the use of Python tuples to pass in: (key, x, y)
@@ -82,6 +99,18 @@ class GLUTWindow(object):
             self.is_animating = not self.is_animating
             self.is_simulating = False
             print("self.is_animating = %s" % self.is_animating)
+        elif key == '1':
+            self.is_simulating = False
+            self.is_animating = False
+            self.frame_index = 1
+            print (self.frame_index)
+            self.sim.set_frame(self.frame_index)
+        elif key == '2':
+            self.is_simulating = False
+            self.is_animating = False
+            self.frame_index = self.sim.num_frames()-1
+            print(self.frame_index)
+            self.sim.set_frame(self.frame_index)
         elif key == ']':
             self.frame_index = (self.frame_index + 1) % self.sim.num_frames()
             print("frame = %d/%d" % (self.frame_index, self.sim.num_frames()))
@@ -119,6 +148,7 @@ class GLUTWindow(object):
             return
         if self.is_simulating:
             self.sim.step()
+
             # if self.sim.frame % 10 == 0:
             #     self.capture()
         elif self.is_animating:
@@ -126,12 +156,14 @@ class GLUTWindow(object):
             if hasattr(self.sim, "set_frame"):
                 self.sim.set_frame(self.frame_index)
 
+
     def renderTimer(self, timer):
         # if self.capture_index == self.frame_num:
         #     return
         # else:
             GLUT.glutPostRedisplay()
             GLUT.glutTimerFunc(20, self.renderTimer, 1)
+
 
     def capture(self, timer):
         print("capture! index = %d" % self.capture_index)
@@ -142,7 +174,7 @@ class GLUTWindow(object):
         img = Image.frombytes("RGBA", (w, h), data)
         img = img.transpose(Image.FLIP_TOP_BOTTOM)
         if self.seg_mode == 0:
-            filename = self.folder_name+"capture%04d.png" % self.capture_index
+            filename = self.folder_name+"_A%01d.png" % self.capture_index
             img.save(filename, 'png')
             if self.capture_index == self.frame_num:
                 self.run_seg()
@@ -152,17 +184,20 @@ class GLUTWindow(object):
             mass = self.skel.bodynodes[0].mass()*50
             cimg = np.array(img)
             idx = cimg[:, :, 0] < 100
-            cimg[idx, 0] = mass
-            cimg[idx, 1] = mass
-            cimg[idx, 2] = mass
+            r, g, b = self.rgb(1, 3, mass)
+            cimg[idx, 0] = r
+            cimg[idx, 1] = g
+            cimg[idx, 2] = b
             cimg[~idx, 0] = 0
             cimg[~idx, 1] = 0
             cimg[~idx, 2] = 0
             img = Image.fromarray(cimg)
-            filename = self.folder_name + "capture_seg%04d.png" % self.capture_index
+            filename = self.folder_name + "_B%01d.png" % self.capture_index
             img.save(filename, 'png')
+            sys.exit(1)
             if self.capture_index == self.frame_num:
                 GLUT.glutDestroyWindow(self.window)
+                 #print("done")
             else:
                 GLUT.glutTimerFunc(5000, self.capture, 1)
         self.capture_index += 1
@@ -174,9 +209,72 @@ class GLUTWindow(object):
             #sys.exit()
         # else:
 
+    def capture2(self):
+        print("capture! index = %d" % self.capture_index)
+        from PIL import Image
+        GL.glPixelStorei(GL.GL_PACK_ALIGNMENT, 1)
+        w, h = 1280, 720
+        data = GL.glReadPixels(0, 0, w, h, GL.GL_RGBA, GL.GL_UNSIGNED_BYTE)
+        img = Image.frombytes("RGBA", (w, h), data)
+        img = img.transpose(Image.FLIP_TOP_BOTTOM)
+        if self.seg_mode == 0:
+            filename = self.folder_name+"_A%01d.png" % self.capture_index
+            img.save(filename, 'png')
+            if self.capture_index == self.frame_num:
+                self.run_seg()
+                return
+            #GLUT.glutTimerFunc(5000, self.capture, 1)
+            self.capture_index += 1
+            #self.capture2()
+            return
+        else:
+            mass = self.skel.bodynodes[0].mass()
+            cimg = np.array(img)
+            idx = cimg[:, :, 0] < 100
+            colors = [(0, 0, 255), (0, 255, 0), (255, 0, 0)]
+            r, g, b = self.convert_to_rgb(0.2, 3, mass, colors)
+            cimg[idx, 0] = r
+            cimg[idx, 1] = g
+            cimg[idx, 2] = b
+            cimg[~idx, 0] = 0
+            cimg[~idx, 1] = 0
+            cimg[~idx, 2] = 0
+            img = Image.fromarray(cimg)
+            filename = self.folder_name + "_B%01d.png" % self.capture_index
+            img.save(filename, 'png')
+            GLUT.glutDestroyWindow(self.window)
+            sys.exit(1)
+            if self.capture_index == self.frame_num:
+                GLUT.glutDestroyWindow(self.window)
+            else:
+                GLUT.glutTimerFunc(5000, self.capture, 1)
+
+        # if self.capture_index == self.frame_num:
+            #GLUT.glutDestroyWindow(self.window)
+            #self.close()
+            #return
+            # self.run_seg()
+            #sys.exit()
+        # else:
+
     def close(self):
         self.stop = 1
         GLUT.glutLeaveMainLoop()
+
+    def record_frames(self,timer):
+        self.is_simulating = False
+        self.is_animating = False
+        if not self.frame_index == 1:
+            self.capture2()
+            self.frame_index = 1
+            print(self.frame_index)
+            self.sim.set_frame(self.frame_index)
+            GLUT.glutTimerFunc(100, self.record_frames, 1)
+            return
+        print("check")
+        self.capture2()
+        self.frame_index = self.sim.num_frames()
+        GLUT.glutTimerFunc(100, self.record_frames, 1)
 
     def run(self, ):
         print("\n")
@@ -206,8 +304,8 @@ class GLUTWindow(object):
         GLUT.glutKeyboardFunc(self.keyPressed)
         GLUT.glutMouseFunc(self.mouseFunc)
         GLUT.glutMotionFunc(self.motionFunc)
-        GLUT.glutTimerFunc(10, self.renderTimer, 1)
-        GLUT.glutTimerFunc(100, self.capture, 1)
+        GLUT.glutTimerFunc(1, self.renderTimer, 1)
+        GLUT.glutTimerFunc(2000, self.record_frames, 1)
         #
         # GLUT.glutSetOption(GLUT.GLUT_ACTION_ON_WINDOW_CLOSE,
         #                    GLUT.GLUT_ACTION_CONTINUE_EXECUTION)
@@ -236,7 +334,7 @@ class GLUTWindow(object):
         print("' ': run/stop simulation")
         print("'a': run/stop animation")
         print("'[' and ']': play one frame backward and forward")
-        GLUT.glutTimerFunc(100, self.capture, 1)
+        #GLUT.glutTimerFunc(100, self.capture, 1)
         # # Init glut
         # GLUT.glutInit(())
         # GLUT.glutInitDisplayMode(GLUT.GLUT_RGBA |

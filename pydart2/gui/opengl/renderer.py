@@ -223,7 +223,8 @@ class Renderer(object):
         if texture == -1:
             texture = self.textures[-1]
         self.bind_texture(texture)
-        textureData = np.fromstring(img.tostring(), np.uint8)
+        textureData = np.fromstring(img.tobytes(), np.uint8)
+        textureData = texture
         width, height = img.size
         GL.glTexParameteri(GL.GL_TEXTURE_2D,
                            GL.GL_TEXTURE_MIN_FILTER,
@@ -235,7 +236,7 @@ class Renderer(object):
     def draw_image(self, sx, sy, texture=-1,
                    center=None, angle=None):
         self.set_color(1.0, 1.0, 1.0)
-        GL.glEnable(GL.GL_TEXTURE_2D)
+        #GL.glEnable(GL.GL_TEXTURE_2D)
         if texture == -1:
             texture = self.textures[-1]
         self.bind_texture(texture)
@@ -244,18 +245,19 @@ class Renderer(object):
             self.translate(center[0], center[1])
         if angle is not None:
             self.rotate2d(angle)
+        GL.glNormal3d(1, 0, 0);
         GL.glBegin(GL.GL_QUADS)
         GL.glTexCoord2f(0, 0)
-        GL.glVertex2d(-0.5 * sx, -0.5 * sy)
+        GL.glVertex3d(-0.5 * sx, -0.5 * sy, -0.5)
         GL.glTexCoord2f(0, 1)
-        GL.glVertex2d(-0.5 * sx, 0.5 * sy)
+        GL.glVertex3d(-0.5 * sx, 0.5 * sy, -0.5)
         GL.glTexCoord2f(1, 1)
-        GL.glVertex2d(0.5 * sx, 0.5 * sy)
+        GL.glVertex3d(0.5 * sx, 0.5 * sy, -0.5)
         GL.glTexCoord2f(1, 0)
-        GL.glVertex2d(0.5 * sx, -0.5 * sy)
+        GL.glVertex3d(0.5 * sx, -0.5 * sy, -0.5)
         GL.glEnd()
         self.pop()
-        GL.glDisable(GL.GL_TEXTURE_2D)
+        #GL.glDisable(GL.GL_TEXTURE_2D)
 
     def render_line(self, p0, p1):
         GL.glBegin(GL.GL_LINES)
