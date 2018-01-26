@@ -30,7 +30,10 @@ class GLUTWindow(object):
 
     def drawGL(self, ):
         self.scene.render(self.sim)
-        # GLUT.glutSolidSphere(0.3, 20, 20)  # Default object for debugging
+        #GL.glTranslate(0,0,-1)
+
+        #self.scene.renderer.render_box((0,0,-1),(0.1,0.1,0.1))
+        GLUT.glutSolidSphere(0.01, 20, 20)  # Default object for debugging
         GLUT.glutSwapBuffers()
 
     # The function called whenever a key is pressed.

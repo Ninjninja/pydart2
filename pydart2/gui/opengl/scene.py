@@ -1,7 +1,7 @@
 import OpenGL.GL as GL
 import OpenGL.GLU as GLU
 import OpenGL.GLUT as GLUT
-
+from PIL import Image
 from pydart2.gui.opengl.renderer import Renderer
 from pydart2.gui.trackball import Trackball
 
@@ -19,10 +19,20 @@ class OpenGLScene(object):
         self.init_cameras()
 
     def init(self, ):
+        # GL.glClearColor(0.0, 0.0, 0.0, 0.0)
+        # GL.glClearDepth(1.0)
+        # GL.glDepthFunc(GL.GL_LEQUAL)
+        # GL.glEnable(GL.GL_DEPTH_TEST)
+        # GL.glShadeModel(GL.GL_SMOOTH)
+        # GL.glMatrixMode(GL.GL_PROJECTION)
+        # GL.glLoadIdentity()
+        # GL.gluPerspective(45.0, float(Width) / float(Height), 0.1, 100.0)
+        # GL.glMatrixMode(GL.GL_MODELVIEW)
+        self.disable2D()
         GL.glDisable(GL.GL_CULL_FACE)
-        GL.glEnable(GL.GL_DEPTH_TEST)
+        #GL.glEnable(GL.GL_DEPTH_TEST)
 
-        GL.glDepthFunc(GL.GL_LEQUAL)
+        #GL.glDepthFunc(GL.GL_LEQUAL)
         GL.glHint(GL.GL_PERSPECTIVE_CORRECTION_HINT, GL.GL_NICEST)
 
         GL.glEnable(GL.GL_LINE_SMOOTH)
@@ -88,6 +98,12 @@ class OpenGLScene(object):
         GL.glMaterialfv(GL.GL_FRONT_AND_BACK, GL.GL_DIFFUSE,
                         front_mat_diffuse)
 
+        self.tex = self.renderer.gen_textures(1)
+        self.renderer.bind_texture(self.tex)
+        img = Image.open('texture.png')
+        self.texture = self.renderer.set_texture_as_image(img)
+        self.renderer.bind_texture(self.tex)
+
     def resize(self, w, h):
         (self.width, self.height) = (w, h)
         GL.glViewport(0, 0, w, h)
@@ -108,14 +124,19 @@ class OpenGLScene(object):
         # glTranslate(0.0, -0.2, self.zoom)  # Camera
         GL.glTranslate(*self.tb.trans)
         GL.glMultMatrixf(self.tb.matrix)
-
+        GL.glEnable(GL.GL_TEXTURE_2D)
+        skel = sim.skeletons[-1]
+        loc = skel.dq
+        self.renderer.render_box((0+loc[0], -0.22, 0+loc[1]), (0.1, 0.1, 0.1))
+        #GLUT.glutSwapBuffers()
+        GL.glDisable(GL.GL_TEXTURE_2D)
+        GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
         if sim is None:
             return
 
         if hasattr(sim, "render"):
             sim.render()
-
-        self.renderer.enable("COLOR_MATERIAL")
+        #self.renderer.enable("COLOR_MATERIAL")
         if hasattr(sim, "render_with_ri"):
             sim.render_with_ri(self.renderer)
 
@@ -124,6 +145,7 @@ class OpenGLScene(object):
             sim.draw_with_ri(self.renderer)
             self.renderer.draw_text([-100, -100], "")
         self.disable2D()
+        #GLUT.glutSwapBuffers()
 
     def enable2D(self):
         w, h = self.width, self.height

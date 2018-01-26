@@ -208,6 +208,7 @@ class Renderer(object):
         self.pop()
 
     def gen_textures(self, num_textures=1):
+        GL.glEnable(GL.GL_TEXTURE_2D)
         im = GL.glGenTextures(num_textures)
         self.textures.append(im)
         return im
@@ -222,14 +223,21 @@ class Renderer(object):
     def set_texture_as_image(self, img, texture=-1):
         if texture == -1:
             texture = self.textures[-1]
+
+        #GL.glEnable(GL.GL_TEXTURE_GEN_S)
+        #GL.glEnable(GL.GL_TEXTURE_GEN_T)
+        #GL.glEnable(GL.GL_TEXTURE_2D)
         self.bind_texture(texture)
-        textureData = np.fromstring(img.tostring(), np.uint8)
+        textureData = np.fromstring(img.tobytes(), np.uint8)
         width, height = img.size
         GL.glTexParameteri(GL.GL_TEXTURE_2D,
                            GL.GL_TEXTURE_MIN_FILTER,
                            GL.GL_LINEAR)
         GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGB, width, height,
                         0, GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, textureData)
+        GL.glTexEnvf(GL.GL_TEXTURE_ENV, GL.GL_TEXTURE_ENV_MODE, GL.GL_DECAL)
+
+        return texture
         # print("set_texture_data: %d x %d" % (width, height))
 
     def draw_image(self, sx, sy, texture=-1,
@@ -276,11 +284,64 @@ class Renderer(object):
         GL.glPopMatrix()
 
     def render_box(self, pos, size):
+
+        GL.glBindTexture(GL.GL_TEXTURE_2D, 1)
         GL.glPushMatrix()
         GL.glTranslated(*pos)
         GL.glScaled(*size)
-        GLUT.glutSolidCube(1.0)
+        #GLUT.glutSolidCube(1.0)
+        GL.glBegin(GL.GL_QUADS)
+        GL.glTexCoord2f(0.0, 0.0)
+        GL.glVertex3f(-1.0, -1.0, 1.0)
+        GL.glTexCoord2f(1.0, 0.0)
+        GL.glVertex3f(1.0, -1.0, 1.0)
+        GL.glTexCoord2f(1.0, 1.0)
+        GL.glVertex3f(1.0, 1.0, 1.0)
+        GL.glTexCoord2f(0.0, 1.0)
+        GL.glVertex3f(-1.0, 1.0, 1.0)
+        GL.glTexCoord2f(1.0, 0.0)
+        GL.glVertex3f(-1.0, -1.0, -1.0)
+        GL.glTexCoord2f(1.0, 1.0)
+        GL.glVertex3f(-1.0, 1.0, -1.0)
+        GL.glTexCoord2f(0.0, 1.0)
+        GL.glVertex3f(1.0, 1.0, -1.0)
+        GL.glTexCoord2f(0.0, 0.0)
+        GL.glVertex3f(1.0, -1.0, -1.0)
+        GL.glTexCoord2f(0.0, 1.0)
+        GL.glVertex3f(-1.0, 1.0, -1.0)
+        GL.glTexCoord2f(0.0, 0.0)
+        GL.glVertex3f(-1.0, 1.0, 1.0)
+        GL.glTexCoord2f(1.0, 0.0)
+        GL.glVertex3f(1.0, 1.0, 1.0)
+        GL.glTexCoord2f(1.0, 1.0)
+        GL.glVertex3f(1.0, 1.0, -1.0)
+        GL.glTexCoord2f(1.0, 1.0)
+        GL.glVertex3f(-1.0, -1.0, -1.0)
+        GL.glTexCoord2f(0.0, 1.0)
+        GL.glVertex3f(1.0, -1.0, -1.0)
+        GL.glTexCoord2f(0.0, 0.0)
+        GL.glVertex3f(1.0, -1.0, 1.0)
+        GL.glTexCoord2f(1.0, 0.0)
+        GL.glVertex3f(-1.0, -1.0, 1.0)
+        GL.glTexCoord2f(1.0, 0.0)
+        GL.glVertex3f(1.0, -1.0, -1.0)
+        GL.glTexCoord2f(1.0, 1.0)
+        GL.glVertex3f(1.0, 1.0, -1.0)
+        GL.glTexCoord2f(0.0, 1.0)
+        GL.glVertex3f(1.0, 1.0, 1.0)
+        GL.glTexCoord2f(0.0, 0.0)
+        GL.glVertex3f(1.0, -1.0, 1.0)
+        GL.glTexCoord2f(0.0, 0.0)
+        GL.glVertex3f(-1.0, -1.0, -1.0)
+        GL.glTexCoord2f(1.0, 0.0)
+        GL.glVertex3f(-1.0, -1.0, 1.0)
+        GL.glTexCoord2f(1.0, 1.0)
+        GL.glVertex3f(-1.0, 1.0, 1.0)
+        GL.glTexCoord2f(0.0, 1.0)
+        GL.glVertex3f(-1.0, 1.0, -1.0)
+        GL.glEnd()
         GL.glPopMatrix()
+
 
     def render_chessboard(self, sz, n=10, color1=None, color2=None):
         GL.glDisable(GL.GL_LIGHTING)

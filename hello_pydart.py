@@ -64,6 +64,7 @@ if __name__ == '__main__':
         "Camera Y up")
     win.scene.set_camera(2)
     skel.bodynodes[0].set_mass(1)
+    print(skel.q)
     win.run()
 
     pydart.gui.viewer.launch(world)
