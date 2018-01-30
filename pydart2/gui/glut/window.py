@@ -13,7 +13,7 @@ EPSILON = sys.float_info.epsilon
 
 
 class GLUTWindow(object):
-    def __init__(self, sim, title,frame_num):
+    def __init__(self, sim, title,frame_num,filename1,filename2):
         self.sim1 = deepcopy(sim)
         self.sim = sim
         self.skel = self.sim1.skeletons[-1]
@@ -31,6 +31,8 @@ class GLUTWindow(object):
         self.folder_name = "examples/data/captures/"
         self.stop = 0
         self.seg_mode = 0
+        self.filename1 = filename1
+        self.filename2 = filename2
 
     def convert_to_rgb(self, minval, maxval, val, colors):
         fi = float(val - minval) / float(maxval - minval) * (len(colors) - 1)
@@ -46,7 +48,7 @@ class GLUTWindow(object):
         self.folder_name = folder_name
 
     def initGL(self, w, h):
-        self.scene.init()
+        self.scene.init(self.filename1, self.filename2)
 
     def resizeGL(self, w, h):
         self.scene.resize(w, h)
@@ -55,26 +57,26 @@ class GLUTWindow(object):
 
         GL.glDisable(GL.GL_LIGHTING)
         GL.glColor3f(0.0, 0.0, 1.0)
-        self.scene.render(self.sim)
+        self.scene.render_seg(self.sim)
         # GLUT.glutSolidSphere(0.3, 20, 20)  # Default object for debugging
         GLUT.glutSwapBuffers()
 
     def drawGL(self, ):
         if self.seg_mode == 0:
             self.scene.render(self.sim)
-            GL.glTranslated(0.0, 0, -1)
-            GL.glColor3f(0.0, 0.0, 1.0)
-
-            GLUT.glutSolidSphere(0.02, 20, 20)  # Default object for debugging
             #GL.glTranslated(0.0, 0, -1)
-            self.scene.renderer.draw_image(0, 0)
+            #GL.glColor3f(0.0, 0.0, 1.0)
+
+           # GLUT.glutSolidSphere(0.02, 20, 20)  # Default object for debugging
+            #GL.glTranslated(0.0, 0, -1)
+            #self.scene.renderer.draw_image(0, 0)
             GLUT.glutSwapBuffers()
             if self.frame_num == self.capture_index:
                 return
         else:
             GL.glDisable(GL.GL_LIGHTING)
             #GL.glColor3f(0.0, 0.0, 1.0)
-            self.scene.render(self.sim)
+            self.scene.render_seg(self.sim)
             # GLUT.glutSolidSphere(0.3, 20, 20)  # Default object for debugging
             GLUT.glutSwapBuffers()
 
@@ -243,7 +245,7 @@ class GLUTWindow(object):
             filename = self.folder_name + "_B%01d.png" % self.capture_index
             img.save(filename, 'png')
             GLUT.glutDestroyWindow(self.window)
-            sys.exit(1)
+            #sys.exit(1)
             if self.capture_index == self.frame_num:
                 GLUT.glutDestroyWindow(self.window)
             else:

@@ -1,11 +1,10 @@
 import OpenGL.GL as GL
 import OpenGL.GLU as GLU
 import OpenGL.GLUT as GLUT
-import cv2
 from PIL import Image
 from pydart2.gui.opengl.renderer import Renderer
 from pydart2.gui.trackball import Trackball
-import numpy as np
+
 
 class OpenGLScene(object):
     def __init__(self, width, height, window=None):
@@ -19,11 +18,21 @@ class OpenGLScene(object):
         self.tb = None
         self.init_cameras()
 
-    def init(self, ):
+    def init(self, filename1,filename2):
+        # GL.glClearColor(0.0, 0.0, 0.0, 0.0)
+        # GL.glClearDepth(1.0)
+        # GL.glDepthFunc(GL.GL_LEQUAL)
+        # GL.glEnable(GL.GL_DEPTH_TEST)
+        # GL.glShadeModel(GL.GL_SMOOTH)
+        # GL.glMatrixMode(GL.GL_PROJECTION)
+        # GL.glLoadIdentity()
+        # GL.gluPerspective(45.0, float(Width) / float(Height), 0.1, 100.0)
+        # GL.glMatrixMode(GL.GL_MODELVIEW)
+        self.disable2D()
         GL.glDisable(GL.GL_CULL_FACE)
-        GL.glEnable(GL.GL_DEPTH_TEST)
+        #GL.glEnable(GL.GL_DEPTH_TEST)
 
-        GL.glDepthFunc(GL.GL_LEQUAL)
+        #GL.glDepthFunc(GL.GL_LEQUAL)
         GL.glHint(GL.GL_PERSPECTIVE_CORRECTION_HINT, GL.GL_NICEST)
 
         GL.glEnable(GL.GL_LINE_SMOOTH)
@@ -81,19 +90,27 @@ class OpenGLScene(object):
         GL.glLightfv(GL.GL_LIGHT1, GL.GL_POSITION, position1)
         GL.glEnable(GL.GL_LIGHTING)
 
-        img = Image.open('texture.png').transpose(Image.FLIP_TOP_BOTTOM)
-        # img_data = np.fromstring(img.tobytes(), np.uint8)
-        id = self.renderer.gen_textures(1)
+        GL.glEnable(GL.GL_COLOR_MATERIAL)
+        GL.glMaterialfv(GL.GL_FRONT_AND_BACK, GL.GL_SHININESS,
+                        front_mat_shininess)
+        GL.glMaterialfv(GL.GL_FRONT_AND_BACK, GL.GL_SPECULAR,
+                        front_mat_specular)
+        GL.glMaterialfv(GL.GL_FRONT_AND_BACK, GL.GL_DIFFUSE,
+                        front_mat_diffuse)
 
-        # self.renderer.bind_texture(id)
-        # self.renderer.set_texture_as_image(img)
-        #GL.glEnable(GL.GL_COLOR_MATERIAL)
-        #GL.glMaterialfv(GL.GL_FRONT_AND_BACK, GL.GL_SHININESS,
-        #                front_mat_shininess)
-        #GL.glMaterialfv(GL.GL_FRONT_AND_BACK, GL.GL_SPECULAR,
-        #                front_mat_specular)
-        #GL.glMaterialfv(GL.GL_FRONT_AND_BACK, GL.GL_DIFFUSE,
-        #                front_mat_diffuse)
+        self.tex = self.renderer.gen_textures(1)
+        print('check2', self.tex)
+        self.renderer.bind_texture(self.tex)
+        img = Image.open(filename1)
+        self.texture = self.renderer.set_texture_as_image(img)
+        self.renderer.bind_texture(self.tex)
+
+        self.tex2 = self.renderer.gen_textures(1)
+        # print('check2', self.tex2)
+        self.renderer.bind_texture(self.tex2)
+        img = Image.open(filename2)
+        self.texture = self.renderer.set_texture_as_image(img)
+        self.renderer.bind_texture(self.tex)
 
     def resize(self, w, h):
         (self.width, self.height) = (w, h)
@@ -113,19 +130,36 @@ class OpenGLScene(object):
 
         GL.glLoadIdentity()
         # glTranslate(0.0, -0.2, self.zoom)  # Camera
+
+        # GL.glTranslate(0.1, 0, -1.6)
+        # GL.glRotate(-0.452, 0.045, -0.002, 0.987)
+        #
+        GL.glLoadIdentity()
+        # print(*self.tb.trans)
         GL.glTranslate(*self.tb.trans)
         GL.glMultMatrixf(self.tb.matrix)
+        GL.glEnable(GL.GL_TEXTURE_2D)
+        skel = sim.skeletons[-1]
+        loc = skel.q
+        # print(loc)
+        GL.glBindTexture(GL.GL_TEXTURE_2D, 1)
+        self.renderer.render_box((-0+loc[1], -0.25, -0+loc[0]), (0.1, 0.1, 0.1))
 
+
+
+        #GLUT.glutSwapBuffers()
+        # GL.glDisable(GL.GL_TEXTURE_2D)
+        # GL.glEnable(GL.GL_TEXTURE_GEN_S)
+        #GL.glEnable(GL.GL_TEXTURE_GEN_T)
+        #GL.glEnable(GL.GL_TEXTURE_2D)
+        GL.glBindTexture(GL.GL_TEXTURE_2D, 2)
+        self.renderer.render_box((0, -0.375, 0), (1.25, 0.05, 1.25))
         if sim is None:
             return
 
         if hasattr(sim, "render"):
             sim.render()
-
         self.renderer.enable("COLOR_MATERIAL")
-        #img = cv2.imread('texture.png')
-
-
         if hasattr(sim, "render_with_ri"):
             sim.render_with_ri(self.renderer)
 
@@ -133,8 +167,53 @@ class OpenGLScene(object):
         if hasattr(sim, "draw_with_ri"):
             sim.draw_with_ri(self.renderer)
             self.renderer.draw_text([-100, -100], "")
-
         self.disable2D()
+        #GLUT.glutSwapBuffers()
+
+    def render_seg(self, sim=None):
+        GL.glEnable(GL.GL_DEPTH_TEST)
+        GL.glClearColor(0.98, 0.98, 0.98, 0.0)
+        GL.glClearColor(1.0, 1.0, 1.0, 1.0)
+        GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
+
+        GL.glLoadIdentity()
+        # glTranslate(0.0, -0.2, self.zoom)  # Camera
+
+        # GL.glTranslate(0.1, 0, -1.6)
+        # GL.glRotate(-0.452, 0.045, -0.002, 0.987)
+        #
+        GL.glLoadIdentity()
+        # print(*self.tb.trans)
+        GL.glTranslate(*self.tb.trans)
+        GL.glMultMatrixf(self.tb.matrix)
+        GL.glDisable(GL.GL_TEXTURE_2D)
+        GL.glDisable(GL.GL_LIGHTING)
+        skel = sim.skeletons[-1]
+        loc = skel.q
+        # print(loc)
+        GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
+        self.renderer.render_box((-0+loc[1], -0.25, -0+loc[0]), (0.1, 0.1, 0.1))
+
+
+
+        #GLUT.glutSwapBuffers()
+        GL.glDisable(GL.GL_TEXTURE_2D)
+
+        if sim is None:
+            return
+
+        if hasattr(sim, "render"):
+            sim.render()
+        #self.renderer.enable("COLOR_MATERIAL")
+        if hasattr(sim, "render_with_ri"):
+            sim.render_with_ri(self.renderer)
+
+        self.enable2D()
+        if hasattr(sim, "draw_with_ri"):
+            sim.draw_with_ri(self.renderer)
+            self.renderer.draw_text([-100, -100], "")
+        self.disable2D()
+        #GLUT.glutSwapBuffers()
 
     def enable2D(self):
         w, h = self.width, self.height

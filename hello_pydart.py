@@ -12,7 +12,7 @@ import sys
 stop = False
 
 
-def get_frames(obj_num, mass_seed,force_name):
+def get_frames(obj_num, mass_seed,force_name,filename1,filename2):
     #print(obj_num, mass)
     text_file = open("Force.txt", "a")
     pydart.init()
@@ -29,7 +29,7 @@ def get_frames(obj_num, mass_seed,force_name):
     text_file.write(str(obj_num)+" "+str(x)+" "+str(y)+" "+str(m)+"\n")
     text_file.close()
     skel.controller = Simulate(skel, mass=m, friction=0.4, force=10 * force_direction)
-    win = GLUTWindow(world, None, frame_num=1)
+    win = GLUTWindow(world, None, frame_num=1,filename1=filename1,filename2=filename2)
     #if not os.path.exists("examples/data/captures/obj"+str(obj_num)+"_"+force_name+"_"):
     #    os.makedirs("examples/data/captures/obj"+str(obj_num)+"_"+force_name+"_")
     win.set_filename("examples/data/captures/obj"+str(obj_num)+"_"+force_name+"_")
@@ -85,7 +85,7 @@ class Simulate:
 
 
 if __name__ == '__main__':
-    get_frames(sys.argv[1], sys.argv[2], sys.argv[3])
+    get_frames(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5])
     # pydart.gui.viewer.launch(world)
     # while world.t < 2.0:
     #
