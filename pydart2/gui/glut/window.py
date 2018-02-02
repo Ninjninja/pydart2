@@ -93,7 +93,7 @@ class GLUTWindow(object):
 
     def set_parm(self):
         self.simulation_num += 1
-        loc = np.random.normal(0, 0.1s, 3)
+        loc = np.random.normal(0, 0.1, 3)
         loc[2] = self.loc[2]
         self.skel.set_positions(loc)
         x = np.random.uniform(-1, 1)
