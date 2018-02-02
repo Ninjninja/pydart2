@@ -60,7 +60,7 @@ class Simulate:
 
 
 class GLUTWindow(object):
-    def __init__(self, sim, title,frame_num,filename1,filename2):
+    def __init__(self, sim, title,frame_num):
         # self.sim1 = deepcopy(sim)
         for root, dirs, files in os.walk('/home/niranjan/Projects/datasets/ETH_Synthesizability/texture',
                                          topdown=False):
@@ -88,8 +88,7 @@ class GLUTWindow(object):
         self.folder_name = "/home/niranjan/Projects/datasets/push_tex/"
         self.stop = 0
         self.seg_mode = 0
-        self.filename1 = filename1
-        self.filename2 = filename2
+
 
     def set_parm(self):
         self.simulation_num += 1
@@ -103,7 +102,7 @@ class GLUTWindow(object):
         self.filename2 = os.path.join(self.root, self.files[np.random.randint(len(self.files))])
         self.filename1 = os.path.join(self.root, self.files[np.random.randint(len(self.files))])
         if hasattr(self, 'scene'):
-            print('Entered')
+            # print('Entered')
             self.scene.set_textures(self.filename1, self.filename2)
         force = 10 * force_direction
         self.parm = {'mass': m, 'friction': 0.7, 'force': force}
@@ -241,7 +240,7 @@ class GLUTWindow(object):
 
 
     def capture(self, timer):
-        print("capture! index = %d" % self.capture_index)
+        # print("capture! index = %d" % self.capture_index)
         from PIL import Image
         GL.glPixelStorei(GL.GL_PACK_ALIGNMENT, 1)
         w, h = 1280, 720
@@ -285,7 +284,7 @@ class GLUTWindow(object):
         # else:
 
     def capture2(self):
-        print("capture! index = %d" % self.capture_index)
+        # print("capture! index = %d" % self.capture_index)
         from PIL import Image
         GL.glPixelStorei(GL.GL_PACK_ALIGNMENT, 1)
         w, h = 1280, 720
@@ -293,7 +292,7 @@ class GLUTWindow(object):
         img = Image.frombytes("RGBA", (w, h), data)
         img = img.transpose(Image.FLIP_TOP_BOTTOM)
         if self.seg_mode == 0:
-            print('normal capture')
+            # print('normal capture')
             filename = self.folder_name+"_A%01d.png" % self.capture_index
             # img.save(filename, 'png')
             if self.capture_index == self.frame_num:
@@ -306,7 +305,7 @@ class GLUTWindow(object):
             #self.capture2()
             return
         else:
-            print('seg_capture')
+            # print('seg_capture')
             mass = self.skel.bodynodes[0].mass()
             cimg = np.array(img)
             idx = cimg[:, :, 0] < 100
@@ -326,7 +325,7 @@ class GLUTWindow(object):
             imgf = imgf.resize((256*3, 256), Image.ANTIALIAS)
             imgf.save(os.path.join(self.folder_name, filename), 'png')
             self.seg_mode = 0
-            print('got_seg')
+            # print('got_seg')
             # self.skel.set_positions(self.loc)
 
 
@@ -351,20 +350,20 @@ class GLUTWindow(object):
         GLUT.glutLeaveMainLoop()
 
     def record_frames(self,timer):
-        print(self.frame_index)
+        # print(self.frame_index)
         self.is_simulating = False
         self.is_animating = False
         if not self.frame_index == 1 and self.seg_mode == 0:
-            print("check..1")
+            # print("check..1")
             self.capture2()
             self.frame_index = 1
-            print(self.frame_index)
+            # print(self.frame_index)
             self.sim.set_frame(self.frame_index)
             self.render = True
             # GLUT.glutTimerFunc(100, self.record_frames, 1)
             return
         if self.seg_mode == 1:
-            print("check..2")
+            # print("check..2")
             self.capture2()
             # self.frame_index = self.sim.num_frames()
             self.frame_index = 1
@@ -379,9 +378,9 @@ class GLUTWindow(object):
             # self.is_simulating = True
             # self.is_animating = True
             GLUT.glutTimerFunc(1000, self.record_frames, 1)
-            print('waiting for capture')
+            # print('waiting for capture')
         else:
-            print("check..3")
+            # print("check..3")
             self.capture2()
             # self.frame_index = self.sim.num_frames()
             self.frame_index = 1
@@ -439,7 +438,7 @@ class GLUTWindow(object):
         #self.skel.q = self.loc
         # self.skel.set_positions(self.loc)
         self.seg_mode = 1
-        print("seg mode on")
+        # print("seg mode on")
         # print("space bar: simulation on/off")
         # print("' ': run/stop simulation")
         # print("'a': run/stop animation")
