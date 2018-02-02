@@ -18,7 +18,7 @@ class OpenGLScene(object):
         self.tb = None
         self.init_cameras()
 
-    def init(self, filename1,filename2):
+    def init(self):
         # GL.glClearColor(0.0, 0.0, 0.0, 0.0)
         # GL.glClearDepth(1.0)
         # GL.glDepthFunc(GL.GL_LEQUAL)
@@ -99,18 +99,24 @@ class OpenGLScene(object):
                         front_mat_diffuse)
 
         self.tex = self.renderer.gen_textures(1)
-        print('check2', self.tex)
-        self.renderer.bind_texture(self.tex)
-        img = Image.open(filename1)
-        self.texture = self.renderer.set_texture_as_image(img)
-        self.renderer.bind_texture(self.tex)
-
+        # print('check2', self.tex)
+        # self.renderer.bind_texture(self.tex)
         self.tex2 = self.renderer.gen_textures(1)
         # print('check2', self.tex2)
-        self.renderer.bind_texture(self.tex2)
-        img = Image.open(filename2)
-        self.texture = self.renderer.set_texture_as_image(img)
+        # self.renderer.bind_texture(self.tex2)
+
+    def set_textures(self,filename1, filename2):
+
+        img = Image.open(filename1)
         self.renderer.bind_texture(self.tex)
+        self.texture = self.renderer.set_texture_as_image(img, self.tex)
+        self.renderer.bind_texture(self.tex)
+
+
+        img = Image.open(filename2)
+        self.renderer.bind_texture(self.tex2)
+        self.texture = self.renderer.set_texture_as_image(img, self.tex2)
+        self.renderer.bind_texture(self.tex2)
 
     def resize(self, w, h):
         (self.width, self.height) = (w, h)

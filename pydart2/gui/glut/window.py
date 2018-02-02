@@ -6,19 +6,76 @@ import time
 import cv2 as cv
 import numpy as np
 from pydart2.gui.opengl.scene import OpenGLScene
-from copy import deepcopy
+import os
 EPSILON = sys.float_info.epsilon
 # Some api in the chain is translating the keystrokes to this octal string
 # so instead of saying: ESCAPE = 27, we use the following.
+np.random.seed(int(133))
+
+class Simulate:
+    """ Add damping force to the skeleton """
+
+    def __init__(self, skel, mass, friction, force):
+        self.skel = skel
+        #print("check")
+        self.count = 0
+        self.mass = mass
+        self.friction = friction
+        self.skel.bodynodes[0].set_mass(self.mass)
+        print(self.skel.bodynodes[0].mass())
+        self.force = self.skel.dq * 0
+        self.force[0:1] = force[0]
+        self.force[1] = force[1]
+        #print(force)
+
+    def compute(self):
+
+        self.count += 1
+        if self.count > 50:
+            # print("check3")
+            mask = self.skel.dq * 0 + 1
+            mask[abs(self.skel.dq) < 0.001] = 0
+            self.skel.set_velocities(np.multiply(self.skel.dq, mask))
+            #self.skel.dq[self.skel.dq > 10] = 0
+            # print(self.skel.bodynodes[0].mass())
+            self.force = - self.skel.dq * self.skel.bodynodes[0].mass() * self.friction
+            self.skel.set_velocities(np.multiply(self.skel.dq, mask))
+            #print(self.skel.dq, self.force)
+                #self.skel.set_velocities(self.skel.dq * 0)
+                #self.force = [0, 0, 0]
+
+        else:
+            self.force *= 1
+        return self.force
+
+    def reset(self, mass, friction, force):
+        self.count = 0
+        self.mass = mass
+        self.friction = friction
+        self.skel.bodynodes[0].set_mass(self.mass)
+        print(self.skel.bodynodes[0].mass())
+        self.force = self.skel.dq * 0
+        self.force[0:1] = force[0]
+        self.force[1] = force[1]
 
 
 class GLUTWindow(object):
     def __init__(self, sim, title,frame_num,filename1,filename2):
-        self.sim1 = deepcopy(sim)
+        # self.sim1 = deepcopy(sim)
+        for root, dirs, files in os.walk('/home/niranjan/Projects/datasets/ETH_Synthesizability/texture',
+                                         topdown=False):
+            pass
+        self.root = root
+        self.files = files
+        self.simulation_num = 0
         self.sim = sim
-        self.skel = self.sim1.skeletons[-1]
-        #self.skel.render_with_color([0.5, 0.5, 0.5])
+        self.skel = self.sim.skeletons[-1]
         self.loc = self.skel.q
+        self.set_parm()
+        self.skel.controller = Simulate(self.skel, mass=self.parm['mass'], friction=self.parm['friction'], force=self.parm['force'])
+        self.render = False
+        #self.skel.render_with_color([0.5, 0.5, 0.5])
+
         self.title = title if title is not None else "GLUT Window"
         self.window_size = (1280, 720)
         self.scene = OpenGLScene(*self.window_size)
@@ -28,11 +85,28 @@ class GLUTWindow(object):
         self.is_animating = False
         self.frame_index = 0
         self.capture_index = 0
-        self.folder_name = "examples/data/captures/"
+        self.folder_name = "/home/niranjan/Projects/datasets/push_tex/"
         self.stop = 0
         self.seg_mode = 0
         self.filename1 = filename1
         self.filename2 = filename2
+
+    def set_parm(self):
+        self.simulation_num += 1
+        loc = np.random.normal(0, 0.1s, 3)
+        loc[2] = self.loc[2]
+        self.skel.set_positions(loc)
+        x = np.random.uniform(-1, 1)
+        y = np.random.choice([1, -1]) * np.sqrt(1.0 - np.float_power(x, 2))
+        force_direction = np.array([x, y])
+        m = np.random.uniform(0.2, 3)
+        self.filename2 = os.path.join(self.root, self.files[np.random.randint(len(self.files))])
+        self.filename1 = os.path.join(self.root, self.files[np.random.randint(len(self.files))])
+        if hasattr(self, 'scene'):
+            print('Entered')
+            self.scene.set_textures(self.filename1, self.filename2)
+        force = 10 * force_direction
+        self.parm = {'mass': m, 'friction': 0.7, 'force': force}
 
     def convert_to_rgb(self, minval, maxval, val, colors):
         fi = float(val - minval) / float(maxval - minval) * (len(colors) - 1)
@@ -48,21 +122,16 @@ class GLUTWindow(object):
         self.folder_name = folder_name
 
     def initGL(self, w, h):
-        self.scene.init(self.filename1, self.filename2)
+        self.scene.init()
+        self.scene.set_textures(self.filename1, self.filename2)
 
     def resizeGL(self, w, h):
         self.scene.resize(w, h)
 
-    def drawGL_seg(self, ):
-
-        GL.glDisable(GL.GL_LIGHTING)
-        GL.glColor3f(0.0, 0.0, 1.0)
-        self.scene.render_seg(self.sim)
-        # GLUT.glutSolidSphere(0.3, 20, 20)  # Default object for debugging
-        GLUT.glutSwapBuffers()
-
     def drawGL(self, ):
+        # print(self.seg_mode)
         if self.seg_mode == 0:
+            GL.glEnable(GL.GL_LIGHTING)
             self.scene.render(self.sim)
             #GL.glTranslated(0.0, 0, -1)
             #GL.glColor3f(0.0, 0.0, 1.0)
@@ -70,16 +139,20 @@ class GLUTWindow(object):
            # GLUT.glutSolidSphere(0.02, 20, 20)  # Default object for debugging
             #GL.glTranslated(0.0, 0, -1)
             #self.scene.renderer.draw_image(0, 0)
-            GLUT.glutSwapBuffers()
-            if self.frame_num == self.capture_index:
-                return
+            # GLUT.glutSwapBuffers()
+            GL.glFinish()
+            # if self.frame_num == self.capture_index:
+            #     return
         else:
             GL.glDisable(GL.GL_LIGHTING)
             #GL.glColor3f(0.0, 0.0, 1.0)
             self.scene.render_seg(self.sim)
             # GLUT.glutSolidSphere(0.3, 20, 20)  # Default object for debugging
-            GLUT.glutSwapBuffers()
-
+            # GLUT.glutSwapBuffers()
+            GL.glFinish()
+        if self.render:
+            self.render = False
+            GLUT.glutTimerFunc(100, self.record_frames, 1)
 
     # The function called whenever a key is pressed.
     # Note the use of Python tuples to pass in: (key, x, y)
@@ -199,7 +272,7 @@ class GLUTWindow(object):
             sys.exit(1)
             if self.capture_index == self.frame_num:
                 GLUT.glutDestroyWindow(self.window)
-                 #print("done")
+                 #print("done")'
             else:
                 GLUT.glutTimerFunc(5000, self.capture, 1)
         self.capture_index += 1
@@ -220,16 +293,20 @@ class GLUTWindow(object):
         img = Image.frombytes("RGBA", (w, h), data)
         img = img.transpose(Image.FLIP_TOP_BOTTOM)
         if self.seg_mode == 0:
+            print('normal capture')
             filename = self.folder_name+"_A%01d.png" % self.capture_index
-            img.save(filename, 'png')
+            # img.save(filename, 'png')
             if self.capture_index == self.frame_num:
+                self.image2 = img
                 self.run_seg()
                 return
+            self.image1 = img
             #GLUT.glutTimerFunc(5000, self.capture, 1)
             self.capture_index += 1
             #self.capture2()
             return
         else:
+            print('seg_capture')
             mass = self.skel.bodynodes[0].mass()
             cimg = np.array(img)
             idx = cimg[:, :, 0] < 100
@@ -242,14 +319,24 @@ class GLUTWindow(object):
             cimg[~idx, 1] = 0
             cimg[~idx, 2] = 0
             img = Image.fromarray(cimg)
-            filename = self.folder_name + "_B%01d.png" % self.capture_index
-            img.save(filename, 'png')
-            GLUT.glutDestroyWindow(self.window)
+            filename = "%01d.png" % self.simulation_num
+            # img.save(filename, 'png')
+            self.image3 = img
+            imgf = Image.fromarray(np.concatenate((np.asarray(self.image1), np.asarray(self.image2), np.asarray(self.image3)), 1))
+            imgf = imgf.resize((256*3, 256), Image.ANTIALIAS)
+            imgf.save(os.path.join(self.folder_name, filename), 'png')
+            self.seg_mode = 0
+            print('got_seg')
+            # self.skel.set_positions(self.loc)
+
+
+            # GLUT.glutDestroyWindow(self.window)
             #sys.exit(1)
-            if self.capture_index == self.frame_num:
-                GLUT.glutDestroyWindow(self.window)
-            else:
-                GLUT.glutTimerFunc(5000, self.capture, 1)
+            # if self.capture_index == self.frame_num:
+            #     # GLUT.glutDestroyWindow(self.window)
+            #     print('done')
+            # else:
+            #     GLUT.glutTimerFunc(5000, self.capture, 1)
 
         # if self.capture_index == self.frame_num:
             #GLUT.glutDestroyWindow(self.window)
@@ -264,19 +351,43 @@ class GLUTWindow(object):
         GLUT.glutLeaveMainLoop()
 
     def record_frames(self,timer):
+        print(self.frame_index)
         self.is_simulating = False
         self.is_animating = False
-        if not self.frame_index == 1:
+        if not self.frame_index == 1 and self.seg_mode == 0:
+            print("check..1")
             self.capture2()
             self.frame_index = 1
             print(self.frame_index)
             self.sim.set_frame(self.frame_index)
-            GLUT.glutTimerFunc(100, self.record_frames, 1)
+            self.render = True
+            # GLUT.glutTimerFunc(100, self.record_frames, 1)
             return
-        print("check")
-        self.capture2()
-        self.frame_index = self.sim.num_frames()
-        GLUT.glutTimerFunc(100, self.record_frames, 1)
+        if self.seg_mode == 1:
+            print("check..2")
+            self.capture2()
+            # self.frame_index = self.sim.num_frames()
+            self.frame_index = 1
+            self.sim.set_frame(self.frame_index)
+            self.skel.set_velocities(self.loc*0)
+            self.sim.reset()
+            self.set_parm()
+            self.skel.controller.reset(mass=self.parm['mass'], friction=self.parm['friction'], force=self.parm['force'])
+            self.is_simulating = True
+            self.is_animating = True
+            self.seg_mode = 0
+            # self.is_simulating = True
+            # self.is_animating = True
+            GLUT.glutTimerFunc(1000, self.record_frames, 1)
+            print('waiting for capture')
+        else:
+            print("check..3")
+            self.capture2()
+            # self.frame_index = self.sim.num_frames()
+            self.frame_index = 1
+            self.sim.set_frame(self.frame_index)
+            self.render = True
+            # GLUT.glutTimerFunc(200, self.record_frames, 1)
 
     def run(self, ):
         print("\n")
@@ -321,21 +432,18 @@ class GLUTWindow(object):
         # while not self.stop:
         #     GLUT.glutCheckLoop()
         GLUT.glutMainLoop()
-        #sys.exit()
-        a = 5+6
-        print("exited")
 
     def run_seg(self, ):
         self.capture_index = 0
-        self.sim = deepcopy(self.sim1)
+        # self.sim = deepcopy(self.sim1)
         #self.skel.q = self.loc
-        self.skel.set_positions(self.loc)
+        # self.skel.set_positions(self.loc)
         self.seg_mode = 1
-        print("\n")
-        print("space bar: simulation on/off")
-        print("' ': run/stop simulation")
-        print("'a': run/stop animation")
-        print("'[' and ']': play one frame backward and forward")
+        print("seg mode on")
+        # print("space bar: simulation on/off")
+        # print("' ': run/stop simulation")
+        # print("'a': run/stop animation")
+        # print("'[' and ']': play one frame backward and forward")
         #GLUT.glutTimerFunc(100, self.capture, 1)
         # # Init glut
         # GLUT.glutInit(())
