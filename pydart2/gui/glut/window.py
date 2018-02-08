@@ -10,7 +10,7 @@ import os
 EPSILON = sys.float_info.epsilon
 # Some api in the chain is translating the keystrokes to this octal string
 # so instead of saying: ESCAPE = 27, we use the following.
-np.random.seed(int(133))
+np.random.seed(int(123))
 
 class Simulate:
     """ Add damping force to the skeleton """
@@ -72,7 +72,7 @@ class GLUTWindow(object):
         self.skel = self.sim.skeletons[-1]
         self.loc = self.skel.q
         self.set_parm()
-        self.skel.controller = Simulate(self.skel, mass=self.parm['mass'], friction=self.parm['friction'], force=self.parm['force'])
+        # self.skel.controller = Simulate(self.skel, mass=self.parm['mass'], friction=self.parm['friction'], force=self.parm['force'])
         self.render = False
         #self.skel.render_with_color([0.5, 0.5, 0.5])
 
@@ -82,7 +82,7 @@ class GLUTWindow(object):
         self.frame_num = frame_num
         self.mouseLastPos = None
         self.is_simulating = True
-        self.is_animating = False
+        self.is_animating = True
         self.frame_index = 0
         self.capture_index = 0
         self.folder_name = "/home/niranjan/Projects/datasets/push_tex/"
@@ -92,20 +92,33 @@ class GLUTWindow(object):
 
     def set_parm(self):
         self.simulation_num += 1
-        loc = np.random.normal(0, 0.1, 3)
-        loc[2] = self.loc[2]
+        loc1 = np.random.normal(0, 0.1, 2)
+        loc= self.loc*0
+        loc[3] = loc1[0]
+        loc[5] = loc1[0]
         self.skel.set_positions(loc)
         x = np.random.uniform(-1, 1)
-        y = np.random.choice([1, -1]) * np.sqrt(1.0 - np.float_power(x, 2))
-        force_direction = np.array([x, y])
-        m = np.random.uniform(0.2, 3)
+        y = np.random.uniform(-1, 1)
+        normalize_c = np.sqrt(np.float_power(y, 2) + np.float_power(x, 2))
+        # y = np.random.choice([1, -1]) * np.sqrt(1.0 - np.float_power(x, 2))
+        # force_direction = np.array([x, y])
+        x = x/normalize_c
+        y = y/normalize_c
+        offset = np.random.uniform(-0.01, 0.01, 2)
+
+        bod = self.skel.root_bodynode()
+
+        bod.add_ext_force(np.array([x*1500, 0, y*1500]), np.array([offset[0], 0, offset[1]]))
+
+        m = np.random.uniform(1, 3)
+        self.skel.bodynodes[0].set_mass(m)
         self.filename2 = os.path.join(self.root, self.files[np.random.randint(len(self.files))])
         self.filename1 = os.path.join(self.root, self.files[np.random.randint(len(self.files))])
         if hasattr(self, 'scene'):
             # print('Entered')
             self.scene.set_textures(self.filename1, self.filename2)
-        force = 10 * force_direction
-        self.parm = {'mass': m, 'friction': 0.7, 'force': force}
+        # force = 10 * force_direction
+        self.parm = {'mass': m, 'friction': 0.7, 'force': 10}
 
     def convert_to_rgb(self, minval, maxval, val, colors):
         fi = float(val - minval) / float(maxval - minval) * (len(colors) - 1)
@@ -133,25 +146,30 @@ class GLUTWindow(object):
             GL.glEnable(GL.GL_LIGHTING)
             self.scene.render(self.sim)
             #GL.glTranslated(0.0, 0, -1)
-            #GL.glColor3f(0.0, 0.0, 1.0)
+            GL.glColor3f(0.0, 0.0, 1.0)
 
            # GLUT.glutSolidSphere(0.02, 20, 20)  # Default object for debugging
             #GL.glTranslated(0.0, 0, -1)
             #self.scene.renderer.draw_image(0, 0)
-            # GLUT.glutSwapBuffers()
-            GL.glFinish()
+            GLUT.glutSwapBuffers()
+            # GL.glFinish()
             # if self.frame_num == self.capture_index:
             #     return
         else:
             GL.glDisable(GL.GL_LIGHTING)
-            #GL.glColor3f(0.0, 0.0, 1.0)
+            GL.glColor3f(0.0, 0.0, 1.0)
             self.scene.render_seg(self.sim)
             # GLUT.glutSolidSphere(0.3, 20, 20)  # Default object for debugging
-            # GLUT.glutSwapBuffers()
-            GL.glFinish()
+            GLUT.glutSwapBuffers()
+            # GL.glFinish()
         if self.render:
             self.render = False
             GLUT.glutTimerFunc(100, self.record_frames, 1)
+        # self.skel.tau = (np.array([100, 100, 100, 100, 100, 100]))
+        # self.skel.tau = (np.array([1, 1, 1, 0, 0, 0]))
+        # bod = self.skel.root_bodynode()
+        # bod.add_ext_force(np.array([1, 0, 0]), np.array([0.5, 0, 0.5]))
+        # print(self.skel.tau, self.skel.com())
 
     # The function called whenever a key is pressed.
     # Note the use of Python tuples to pass in: (key, x, y)
@@ -289,8 +307,8 @@ class GLUTWindow(object):
         GL.glPixelStorei(GL.GL_PACK_ALIGNMENT, 1)
         w, h = 1280, 720
         data = GL.glReadPixels(0, 0, w, h, GL.GL_RGBA, GL.GL_UNSIGNED_BYTE)
-        img = Image.frombytes("RGBA", (w, h), data)
-        img = img.transpose(Image.FLIP_TOP_BOTTOM)
+        img1 = Image.frombytes("RGBA", (w, h), data)
+        img = img1.transpose(Image.FLIP_TOP_BOTTOM)
         if self.seg_mode == 0:
             # print('normal capture')
             filename = self.folder_name+"_A%01d.png" % self.capture_index
@@ -310,7 +328,8 @@ class GLUTWindow(object):
             cimg = np.array(img)
             idx = cimg[:, :, 0] < 100
             colors = [(0, 0, 255), (0, 255, 0), (255, 0, 0)]
-            r, g, b = self.convert_to_rgb(0.2, 3, mass, colors)
+            r, g, b = self.convert_to_rgb(1, 3, mass, colors)
+            print(r,g,b,mass)
             cimg[idx, 0] = r
             cimg[idx, 1] = g
             cimg[idx, 2] = b
@@ -321,6 +340,7 @@ class GLUTWindow(object):
             filename = "%01d.png" % self.simulation_num
             # img.save(filename, 'png')
             self.image3 = img
+            # self.image3 = img1.transpose(Image.FLIP_TOP_BOTTOM)
             imgf = Image.fromarray(np.concatenate((np.asarray(self.image1), np.asarray(self.image2), np.asarray(self.image3)), 1))
             imgf = imgf.resize((256*3, 256), Image.ANTIALIAS)
             imgf.save(os.path.join(self.folder_name, filename), 'png')
@@ -371,7 +391,8 @@ class GLUTWindow(object):
             self.skel.set_velocities(self.loc*0)
             self.sim.reset()
             self.set_parm()
-            self.skel.controller.reset(mass=self.parm['mass'], friction=self.parm['friction'], force=self.parm['force'])
+            # self.skel.controller.reset(mass=self.parm['mass'], friction=self.parm['friction'], force=self.parm['force'])
+
             self.is_simulating = True
             self.is_animating = True
             self.seg_mode = 0

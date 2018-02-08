@@ -3,7 +3,7 @@
     <world name="world 1">
         <physics>
             <time_step>0.001</time_step>
-            <gravity>0 -9.81 0</gravity>
+            <gravity>0 -1 0</gravity>
             <collision_detector>dart</collision_detector>
         </physics>
         
@@ -61,13 +61,9 @@
                 </collision_shape>                                
             </body>
             
-            <joint type="planar" name="joint 1">
+            <joint type="free" name="joint 1">
                 <parent>world</parent>
                 <child>link_1</child>
-                <plane type="zx">
-                    <dynamics><friction>0.5</friction></dynamics>
-                </plane>
-
             </joint>
         </skeleton>
         

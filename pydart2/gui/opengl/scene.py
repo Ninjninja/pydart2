@@ -147,9 +147,9 @@ class OpenGLScene(object):
         GL.glEnable(GL.GL_TEXTURE_2D)
         skel = sim.skeletons[-1]
         loc = skel.q
-        # print(loc)
+        # print(loc[:3])
         GL.glBindTexture(GL.GL_TEXTURE_2D, 1)
-        self.renderer.render_box((-0+loc[1], -0.25, -0+loc[0]), (0.1, 0.1, 0.1))
+        self.renderer.render_box((loc[3], -0.25, loc[5]), (loc[0]/3.14*180, loc[1]/3.14*180, loc[2]/3.14*180), (0.2, 0.2, 0.2))
 
 
 
@@ -159,21 +159,21 @@ class OpenGLScene(object):
         #GL.glEnable(GL.GL_TEXTURE_GEN_T)
         #GL.glEnable(GL.GL_TEXTURE_2D)
         GL.glBindTexture(GL.GL_TEXTURE_2D, 2)
-        self.renderer.render_box((0, -0.375, 0), (1.25, 0.05, 1.25))
-        if sim is None:
-            return
-
-        if hasattr(sim, "render"):
-            sim.render()
-        self.renderer.enable("COLOR_MATERIAL")
-        if hasattr(sim, "render_with_ri"):
-            sim.render_with_ri(self.renderer)
-
-        self.enable2D()
-        if hasattr(sim, "draw_with_ri"):
-            sim.draw_with_ri(self.renderer)
-            self.renderer.draw_text([-100, -100], "")
-        self.disable2D()
+        self.renderer.render_box((0, -0.375, 0), (0, 0, 0),(1.50, 0.05, 1.50))
+        # if sim is None:
+        #     return
+        #
+        # if hasattr(sim, "render"):
+        #     sim.render()
+        # self.renderer.enable("COLOR_MATERIAL")
+        # if hasattr(sim, "render_with_ri"):
+        #     sim.render_with_ri(self.renderer)
+        #
+        # self.enable2D()
+        # if hasattr(sim, "draw_with_ri"):
+        #     sim.draw_with_ri(self.renderer)
+        #     self.renderer.draw_text([-100, -100], "")
+        # self.disable2D()
         #GLUT.glutSwapBuffers()
 
     def render_seg(self, sim=None):
@@ -197,28 +197,29 @@ class OpenGLScene(object):
         skel = sim.skeletons[-1]
         loc = skel.q
         # print(loc)
+
         GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
-        self.renderer.render_box((-0+loc[1], -0.25, -0+loc[0]), (0.1, 0.1, 0.1))
-
-
+        # self.renderer.render_box((-0+loc[1], -0.25, -0+loc[0]), (0.1, 0.1, 0.1))
+        self.renderer.render_box((loc[3], -0.25, loc[5]),
+                                 (loc[0] / 3.14 * 180, loc[1] / 3.14 * 180, loc[2] / 3.14 * 180), (0.2, 0.2, 0.2))
 
         #GLUT.glutSwapBuffers()
         GL.glDisable(GL.GL_TEXTURE_2D)
 
-        if sim is None:
-            return
-
-        if hasattr(sim, "render"):
-            sim.render()
-        #self.renderer.enable("COLOR_MATERIAL")
-        if hasattr(sim, "render_with_ri"):
-            sim.render_with_ri(self.renderer)
-
-        self.enable2D()
-        if hasattr(sim, "draw_with_ri"):
-            sim.draw_with_ri(self.renderer)
-            self.renderer.draw_text([-100, -100], "")
-        self.disable2D()
+        # if sim is None:
+        #     return
+        #
+        # if hasattr(sim, "render"):
+        #     sim.render()
+        # #self.renderer.enable("COLOR_MATERIAL")
+        # if hasattr(sim, "render_with_ri"):
+        #     sim.render_with_ri(self.renderer)
+        #
+        # self.enable2D()
+        # if hasattr(sim, "draw_with_ri"):
+        #     sim.draw_with_ri(self.renderer)
+        #     self.renderer.draw_text([-100, -100], "")
+        # self.disable2D()
         #GLUT.glutSwapBuffers()
 
     def enable2D(self):

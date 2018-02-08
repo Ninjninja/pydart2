@@ -286,12 +286,15 @@ class Renderer(object):
         GLUT.glutSolidSphere(r, num_seg1, num_seg2)
         GL.glPopMatrix()
 
-    def render_box(self, pos, size):
+    def render_box(self, pos, rot, size):
 
         #GL.glBindTexture(GL.GL_TEXTURE_2D, 1)
         GL.glPushMatrix()
         GL.glTranslated(*pos)
         GL.glScaled(*size)
+        GL.glRotate(rot[0], 1, 0, 0)
+        GL.glRotate(rot[1], 0, 1, 0)
+        GL.glRotate(rot[2], 0, 0, 1)
         #GLUT.glutSolidCube(1.0)
         GL.glBegin(GL.GL_QUADS)
         GL.glTexCoord2f(0.0, 0.0)
