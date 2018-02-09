@@ -85,7 +85,7 @@ class GLUTWindow(object):
         self.is_animating = True
         self.frame_index = 0
         self.capture_index = 0
-        self.folder_name = "/home/niranjan/Projects/datasets/push_tex/"
+        self.folder_name = "/home/niranjan/Projects/datasets/push_tex_big/"
         self.stop = 0
         self.seg_mode = 0
 
@@ -104,7 +104,7 @@ class GLUTWindow(object):
         # force_direction = np.array([x, y])
         x = x/normalize_c
         y = y/normalize_c
-        offset = np.random.uniform(-0.01, 0.01, 2)
+        offset = np.random.uniform(-0.01, 0.01, 2) *0
 
         bod = self.skel.root_bodynode()
 
@@ -151,8 +151,8 @@ class GLUTWindow(object):
            # GLUT.glutSolidSphere(0.02, 20, 20)  # Default object for debugging
             #GL.glTranslated(0.0, 0, -1)
             #self.scene.renderer.draw_image(0, 0)
-            GLUT.glutSwapBuffers()
-            # GL.glFinish()
+            # GLUT.glutSwapBuffers()
+            GL.glFinish()
             # if self.frame_num == self.capture_index:
             #     return
         else:
@@ -160,8 +160,8 @@ class GLUTWindow(object):
             GL.glColor3f(0.0, 0.0, 1.0)
             self.scene.render_seg(self.sim)
             # GLUT.glutSolidSphere(0.3, 20, 20)  # Default object for debugging
-            GLUT.glutSwapBuffers()
-            # GL.glFinish()
+            # GLUT.glutSwapBuffers()
+            GL.glFinish()
         if self.render:
             self.render = False
             GLUT.glutTimerFunc(100, self.record_frames, 1)
