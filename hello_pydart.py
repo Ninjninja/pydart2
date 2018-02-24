@@ -54,12 +54,17 @@ class TexWorld(pydart.World):
 
 def get_frames():
     pydart.init()
-    world = pydart.World(0.001, 'examples/data/skel/cube_data.skel')
+    world = pydart.World(0.0005, 'examples/data/skel/cube_data.skel')
     skel = world.skeletons[-1]
-    skel.set_mobile(True)
     bod = skel.root_bodynode()
+    bod.add_ext_force(np.array([0, 0, 400]), np.array([0, 0, 0]))
 
-    bod.add_ext_force(np.array([900, 0, 900]),np.array([0.015*0, 0, 0.01*0]))
+    # world = pydart.World(0.001, 'examples/data/skel/cube_data.skel')
+    # skel = world.skeletons[-1]
+    skel.set_mobile(True)
+    # bod = skel.root_bodynode()
+    #
+    # bod.add_ext_force(np.array([900, 0, 900]),np.array([0.015*0, 0, 0.01*0]))
     # skel.tau = (np.array([0, 1, 0, 0, 0, 100]))
     # world.set_skel(skel)
     # world.add_force([1, 0, 1], [0.00, 0.00, 0.00])
