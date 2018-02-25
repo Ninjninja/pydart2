@@ -146,15 +146,15 @@ class OpenGLScene(object):
         GL.glMultMatrixf(self.tb.matrix)
         # GL.glEnable(GL.GL_TEXTURE_2D)
         skel = sim.skeletons[-1]
-        ground  = sim.skeletons[-2]
+        gnd  = sim.skeletons[-2]
         bod = skel.root_bodynode()
-        loc = skel.q
-        # print(loc[:3])
-        # print(bod.C)
-        GL.glBindTexture(GL.GL_TEXTURE_2D, 1)
-        bod.shapenodes[0].shape.render()
-        bod.shapenodes[1].shape.render()
-        ground.root_bodynode().shapenodes[0].shape.render()
+        # loc = skel.q
+        # # print(loc[:3])
+        # # print(bod.C)
+        # GL.glBindTexture(GL.GL_TEXTURE_2D, 1)
+        # bod.shapenodes[0].shape.render()
+        # bod.shapenodes[1].shape.render()
+        # ground.root_bodynode().shapenodes[0].shape.render()
         # self.renderer.render_box((loc[3], -0.25, loc[5]), (loc[0]/3.14*180, loc[1]/3.14*180, loc[2]/3.14*180), (0.05, 0.05, 0.05))
 
 
@@ -165,6 +165,18 @@ class OpenGLScene(object):
         #GL.glEnable(GL.GL_TEXTURE_GEN_T)
         #GL.glEnable(GL.GL_TEXTURE_2D)
         GL.glBindTexture(GL.GL_TEXTURE_2D, 2)
+        GL.glMultMatrixf(skel.bodynodes[0].T.T)
+        bod.shapenodes[0].shape.render()
+        GL.glLoadIdentity()
+        GL.glTranslate(*self.tb.trans)
+        GL.glMultMatrixf(self.tb.matrix)
+        GL.glMultMatrixf(skel.bodynodes[1].T.T)
+        skel.bodynodes[1].shapenodes[1].shape.render()
+        GL.glLoadIdentity()
+        GL.glTranslate(*self.tb.trans)
+        GL.glMultMatrixf(self.tb.matrix)
+        GL.glMultMatrixf(gnd.bodynodes[0].T.T)
+        gnd.bodynodes[0].shapenodes[0].shape.render()
         # self.renderer.render_box((0, -0.375, 0), (0, 0, 0),(1.50, 0.05, 1.50))
         # if sim is None:
         #     return

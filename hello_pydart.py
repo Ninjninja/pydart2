@@ -77,7 +77,7 @@ def get_frames():
     win.scene.add_camera(
         Trackball(
             rot=[-0.452, 0.045, -0.002, 0.987],
-            trans=[0, 0.2, -1.700]),
+            trans=[0, 0.2, -.500]),
         "Camera Y up")
     win.scene.set_camera(2)
     win.run()
