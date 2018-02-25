@@ -108,21 +108,41 @@ class OpenGLScene(object):
         # glTranslate(0.0, -0.2, self.zoom)  # Camera
         GL.glTranslate(*self.tb.trans)
         GL.glMultMatrixf(self.tb.matrix)
+        skel = sim.skeletons[-1]
+        gnd = sim.skeletons[-2]
+        bod = skel.root_bodynode()
+        print(bod.T)
 
+        # GL.glLoadIdentity()
         if sim is None:
             return
 
         if hasattr(sim, "render"):
-            sim.render()
+            # sim.render()
+            # GL.glTranslate(bod.C)
+            GL.glMultMatrixf(skel.bodynodes[0].T.T)
+            bod.shapenodes[0].shape.render()
+            GL.glLoadIdentity()
+            GL.glTranslate(*self.tb.trans)
+            GL.glMultMatrixf(self.tb.matrix)
+            GL.glMultMatrixf(skel.bodynodes[1].T.T)
+            skel.bodynodes[1].shapenodes[1].shape.render()
+            GL.glLoadIdentity()
+            GL.glTranslate(*self.tb.trans)
+            GL.glMultMatrixf(self.tb.matrix)
+            GL.glMultMatrixf(gnd.bodynodes[0].T.T)
+            gnd.bodynodes[0].shapenodes[0].shape.render()
 
-        self.renderer.enable("COLOR_MATERIAL")
-        if hasattr(sim, "render_with_ri"):
-            sim.render_with_ri(self.renderer)
-
-        self.enable2D()
-        if hasattr(sim, "draw_with_ri"):
-            sim.draw_with_ri(self.renderer)
-            self.renderer.draw_text([-100, -100], "")
+            # gnd.root_bodynode().shapenodes[0].shape.render()
+        #
+        # self.renderer.enable("COLOR_MATERIAL")
+        # if hasattr(sim, "render_with_ri"):
+        #     sim.render_with_ri(self.renderer)
+        #
+        # self.enable2D()
+        # if hasattr(sim, "draw_with_ri"):
+        #     sim.draw_with_ri(self.renderer)
+        #     self.renderer.draw_text([-100, -100], "")
         self.disable2D()
 
     def enable2D(self):
