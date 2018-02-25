@@ -288,7 +288,7 @@ class Renderer(object):
 
     def render_box(self, pos, rot, size):
 
-        #GL.glBindTexture(GL.GL_TEXTURE_2D, 1)
+        # GL.glBindTexture(GL.GL_TEXTURE_2D, 1)
         GL.glPushMatrix()
         GL.glTranslated(*pos)
         GL.glScaled(*size)

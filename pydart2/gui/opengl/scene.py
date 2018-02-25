@@ -162,22 +162,30 @@ class OpenGLScene(object):
         #GLUT.glutSwapBuffers()
         # GL.glDisable(GL.GL_TEXTURE_2D)
         # GL.glEnable(GL.GL_TEXTURE_GEN_S)
-        #GL.glEnable(GL.GL_TEXTURE_GEN_T)
-        #GL.glEnable(GL.GL_TEXTURE_2D)
-        GL.glBindTexture(GL.GL_TEXTURE_2D, 2)
+        # GL.glEnable(GL.GL_TEXTURE_GEN_T)
+        GL.glEnable(GL.GL_TEXTURE_2D)
+        # GL.glDisable(GL.GL_TEXTURE_2D)
+        # GL.glEnable(GL.GL_TEXTURE_GEN_S)
+        GL.glBindTexture(GL.GL_TEXTURE_2D, self.tex)
         GL.glMultMatrixf(skel.bodynodes[0].T.T)
-        bod.shapenodes[0].shape.render()
+        # bod.shapenodes[0].shape.render()
+        self.renderer.render_box((0.025, 0, 0), (1, 1, 1), (0.05, 0.01, 0.01))
         GL.glLoadIdentity()
         GL.glTranslate(*self.tb.trans)
         GL.glMultMatrixf(self.tb.matrix)
         GL.glMultMatrixf(skel.bodynodes[1].T.T)
-        skel.bodynodes[1].shapenodes[1].shape.render()
+        GL.glBindTexture(GL.GL_TEXTURE_2D, self.tex)
+        self.renderer.render_box((-0.025, 0, 0), (1, 1, 1), (0.05, 0.01, 0.01))
+        # skel.bodynodes[1].shapenodes[1].shape.render()
         GL.glLoadIdentity()
         GL.glTranslate(*self.tb.trans)
         GL.glMultMatrixf(self.tb.matrix)
         GL.glMultMatrixf(gnd.bodynodes[0].T.T)
-        gnd.bodynodes[0].shapenodes[0].shape.render()
-        # self.renderer.render_box((0, -0.375, 0), (0, 0, 0),(1.50, 0.05, 1.50))
+        GL.glEnable(GL.GL_TEXTURE_GEN_T)
+        # GL.glDisable(GL.GL_TEXTURE_2D)
+        GL.glBindTexture(GL.GL_TEXTURE_2D, self.tex2)
+        # gnd.bodynodes[0].shapenodes[0].shape.render()
+        self.renderer.render_box((0, -0.1, 0), (0, 0, 0),(0.50, 0.05, 0.50))
         # if sim is None:
         #     return
         #
@@ -218,12 +226,28 @@ class OpenGLScene(object):
 
         GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
         # self.renderer.render_box((-0+loc[1], -0.25, -0+loc[0]), (0.1, 0.1, 0.1))
-        self.renderer.render_box((loc[3], -0.25, loc[5]),
-                                 (loc[0] / 3.14 * 180, loc[1] / 3.14 * 180, loc[2] / 3.14 * 180), (0.2, 0.2, 0.2))
+        # self.renderer.render_box((loc[3], -0.25, loc[5]),
+        #                          (loc[0] / 3.14 * 180, loc[1] / 3.14 * 180, loc[2] / 3.14 * 180), (0.2, 0.2, 0.2))
 
         #GLUT.glutSwapBuffers()
-        GL.glDisable(GL.GL_TEXTURE_2D)
+        # skel = sim.skeletons[-1]
+        gnd  = sim.skeletons[-2]
+        bod = skel.root_bodynode()
 
+        GL.glDisable(GL.GL_TEXTURE_2D)
+        # GL.glEnable(GL.GL_TEXTURE_GEN_S)
+        # GL.glEnable(GL.GL_TEXTURE_GEN_T)
+        # GL.glEnable(GL.GL_TEXTURE_2D)
+        GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
+        GL.glMultMatrixf(skel.bodynodes[0].T.T)
+        self.renderer.render_box((0.025, 0, 0), (1, 1, 1), (0.05, 0.01, 0.01))
+        # bod.shapenodes[0].shape.render()
+        GL.glLoadIdentity()
+        GL.glTranslate(*self.tb.trans)
+        GL.glMultMatrixf(self.tb.matrix)
+        GL.glMultMatrixf(skel.bodynodes[1].T.T)
+        self.renderer.render_box((-0.025, 0, 0), (1, 1, 1), (0.05, 0.01, 0.01))
+        # skel.bodynodes[1].shapenodes[1].shape.render()
         # if sim is None:
         #     return
         #

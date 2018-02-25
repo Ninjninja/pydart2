@@ -85,7 +85,7 @@ class GLUTWindow(object):
         self.is_animating = True
         self.frame_index = 0
         self.capture_index = 0
-        self.folder_name = "/home/niranjan/Projects/datasets/push_tex_big/"
+        self.folder_name = "/home/niranjan/Projects/datasets/push_arti/"
         self.stop = 0
         self.seg_mode = 0
 
@@ -95,7 +95,7 @@ class GLUTWindow(object):
         loc1 = np.random.normal(0, 0.1, 2)
         loc= self.loc*0
         loc[3] = loc1[0]
-        loc[5] = loc1[0]
+        # loc[5] = loc1[0]
         self.skel.set_positions(loc)
         x = np.random.uniform(-1, 1)
         y = np.random.uniform(-1, 1)
@@ -106,14 +106,16 @@ class GLUTWindow(object):
         y = y/normalize_c
         offset = np.random.uniform(-0.01, 0.01, 2) *0
 
-        bod = self.skel.root_bodynode()
+        bod = self.skel.bodynodes[np.random.randint(0,1)]
 
-        bod.add_ext_force(np.array([x*1500, 0, y*1500]), np.array([offset[0], 0, offset[1]]))
+        bod.add_ext_force(np.array([x*10000, 0, y*10000]), np.array([offset[0], 0, offset[1]]))
 
         m = np.random.uniform(1, 3)
         self.skel.bodynodes[0].set_mass(m)
+        self.skel.bodynodes[1].set_mass(m)
         self.filename2 = os.path.join(self.root, self.files[np.random.randint(len(self.files))])
         self.filename1 = os.path.join(self.root, self.files[np.random.randint(len(self.files))])
+        print(self.filename2,self.filename1)
         if hasattr(self, 'scene'):
             # print('Entered')
             self.scene.set_textures(self.filename1, self.filename2)
@@ -151,8 +153,8 @@ class GLUTWindow(object):
            # GLUT.glutSolidSphere(0.02, 20, 20)  # Default object for debugging
             #GL.glTranslated(0.0, 0, -1)
             #self.scene.renderer.draw_image(0, 0)
-            GLUT.glutSwapBuffers()
-            # GL.glFinish()
+            # GLUT.glutSwapBuffers()
+            GL.glFinish()
             # if self.frame_num == self.capture_index:
             #     return
         else:
@@ -160,8 +162,8 @@ class GLUTWindow(object):
             GL.glColor3f(0.0, 0.0, 1.0)
             self.scene.render_seg(self.sim)
             # GLUT.glutSolidSphere(0.3, 20, 20)  # Default object for debugging
-            GLUT.glutSwapBuffers()
-            # GL.glFinish()
+            # GLUT.glutSwapBuffers()
+            GL.glFinish()
         if self.render:
             self.render = False
             GLUT.glutTimerFunc(100, self.record_frames, 1)
@@ -286,7 +288,7 @@ class GLUTWindow(object):
             img = Image.fromarray(cimg)
             filename = self.folder_name + "_B%01d.png" % self.capture_index
             img.save(filename, 'png')
-            sys.exit(1)
+            # sys.exit(1)
             if self.capture_index == self.frame_num:
                 GLUT.glutDestroyWindow(self.window)
                  #print("done")'
@@ -309,6 +311,7 @@ class GLUTWindow(object):
         data = GL.glReadPixels(0, 0, w, h, GL.GL_RGBA, GL.GL_UNSIGNED_BYTE)
         img1 = Image.frombytes("RGBA", (w, h), data)
         img = img1.transpose(Image.FLIP_TOP_BOTTOM)
+        # print(np.array(img).shape)
         if self.seg_mode == 0:
             # print('normal capture')
             filename = self.folder_name+"_A%01d.png" % self.capture_index
@@ -326,7 +329,8 @@ class GLUTWindow(object):
             # print('seg_capture')
             mass = self.skel.bodynodes[0].mass()
             cimg = np.array(img)
-            idx = cimg[:, :, 0] < 100
+            cimg = cimg[:,:,:3]
+            idx = cimg[:, :, 0] < 250
             colors = [(0, 0, 255), (0, 255, 0), (255, 0, 0)]
             r, g, b = self.convert_to_rgb(1, 3, mass, colors)
             print(r,g,b,mass)
@@ -341,7 +345,7 @@ class GLUTWindow(object):
             # img.save(filename, 'png')
             self.image3 = img
             # self.image3 = img1.transpose(Image.FLIP_TOP_BOTTOM)
-            imgf = Image.fromarray(np.concatenate((np.asarray(self.image1), np.asarray(self.image2), np.asarray(self.image3)), 1))
+            imgf = Image.fromarray(np.concatenate((np.asarray(self.image1)[:,:,:3], np.asarray(self.image2)[:,:,:3], np.asarray(self.image3)[:,:,:3]), 1))
             imgf = imgf.resize((256*3, 256), Image.ANTIALIAS)
             imgf.save(os.path.join(self.folder_name, filename), 'png')
             self.seg_mode = 0

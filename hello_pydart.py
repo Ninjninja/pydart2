@@ -57,7 +57,7 @@ def get_frames():
     world = pydart.World(0.0005, 'examples/data/skel/arti_data.skel')
     skel = world.skeletons[-1]
     bod = skel.root_bodynode()
-    bod.add_ext_force(np.array([0, 0, 400]), np.array([0, 0, 0]))
+    bod.add_ext_force(np.array([0, 0, 10000]), np.array([0, 0, 0]))
 
     # world = pydart.World(0.001, 'examples/data/skel/cube_data.skel')
     # skel = world.skeletons[-1]
@@ -77,7 +77,7 @@ def get_frames():
     win.scene.add_camera(
         Trackball(
             rot=[-0.452, 0.045, -0.002, 0.987],
-            trans=[0, 0.2, -.500]),
+            trans=[0, 0.2, -.100]),
         "Camera Y up")
     win.scene.set_camera(2)
     win.run()
