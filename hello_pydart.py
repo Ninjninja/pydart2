@@ -54,7 +54,7 @@ class TexWorld(pydart.World):
 
 def get_frames():
     pydart.init()
-    world = pydart.World(0.0005, 'examples/data/skel/cube_data.skel')
+    world = pydart.World(0.0005, 'examples/data/skel/arti_data.skel')
     skel = world.skeletons[-1]
     bod = skel.root_bodynode()
     bod.add_ext_force(np.array([0, 0, 400]), np.array([0, 0, 0]))

@@ -146,37 +146,41 @@ class OpenGLScene(object):
         GL.glMultMatrixf(self.tb.matrix)
         # GL.glEnable(GL.GL_TEXTURE_2D)
         skel = sim.skeletons[-1]
+        ground  = sim.skeletons[-2]
         bod = skel.root_bodynode()
         loc = skel.q
-        print(loc[:3])
-        print(bod.C)
+        # print(loc[:3])
+        # print(bod.C)
         GL.glBindTexture(GL.GL_TEXTURE_2D, 1)
+        bod.shapenodes[0].shape.render()
+        bod.shapenodes[1].shape.render()
+        ground.root_bodynode().shapenodes[0].shape.render()
         # self.renderer.render_box((loc[3], -0.25, loc[5]), (loc[0]/3.14*180, loc[1]/3.14*180, loc[2]/3.14*180), (0.05, 0.05, 0.05))
 
 
 
         #GLUT.glutSwapBuffers()
-        GL.glDisable(GL.GL_TEXTURE_2D)
-        GL.glEnable(GL.GL_TEXTURE_GEN_S)
+        # GL.glDisable(GL.GL_TEXTURE_2D)
+        # GL.glEnable(GL.GL_TEXTURE_GEN_S)
         #GL.glEnable(GL.GL_TEXTURE_GEN_T)
         #GL.glEnable(GL.GL_TEXTURE_2D)
         GL.glBindTexture(GL.GL_TEXTURE_2D, 2)
-        self.renderer.render_box((0, -0.375, 0), (0, 0, 0),(1.50, 0.05, 1.50))
-        if sim is None:
-            return
-
-        if hasattr(sim, "render"):
-            sim.render()
-        self.renderer.enable("COLOR_MATERIAL")
-        if hasattr(sim, "render_with_ri"):
-            sim.render_with_ri(self.renderer)
-
-        self.enable2D()
-        if hasattr(sim, "draw_with_ri"):
-            sim.draw_with_ri(self.renderer)
-            self.renderer.draw_text([-100, -100], "")
-        self.disable2D()
-        GLUT.glutSwapBuffers()
+        # self.renderer.render_box((0, -0.375, 0), (0, 0, 0),(1.50, 0.05, 1.50))
+        # if sim is None:
+        #     return
+        #
+        # if hasattr(sim, "render"):
+        #     sim.render()
+        # self.renderer.enable("COLOR_MATERIAL")
+        # if hasattr(sim, "render_with_ri"):
+        #     sim.render_with_ri(self.renderer)
+        #
+        # self.enable2D()
+        # if hasattr(sim, "draw_with_ri"):
+        #     sim.draw_with_ri(self.renderer)
+        #     self.renderer.draw_text([-100, -100], "")
+        # self.disable2D()
+        # GLUT.glutSwapBuffers()
 
     def render_seg(self, sim=None):
         GL.glEnable(GL.GL_DEPTH_TEST)
