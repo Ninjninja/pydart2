@@ -4,7 +4,8 @@ import OpenGL.GLUT as GLUT
 from PIL import Image
 from pydart2.gui.opengl.renderer import Renderer
 from pydart2.gui.trackball import Trackball
-
+import sys
+EPSILON = sys.float_info.epsilon
 
 class OpenGLScene(object):
     def __init__(self, width, height, window=None):
@@ -104,6 +105,16 @@ class OpenGLScene(object):
         self.tex2 = self.renderer.gen_textures(1)
         # print('check2', self.tex2)
         # self.renderer.bind_texture(self.tex2)
+
+    def convert_to_rgb(self, minval, maxval, val, colors):
+        fi = float(val - minval) / float(maxval - minval) * (len(colors) - 1)
+        i = int(fi)
+        f = fi - i
+        if f < EPSILON:
+            return colors[i]
+        else:
+            (r1, g1, b1), (r2, g2, b2) = colors[i], colors[i + 1]
+            return int(r1 + f * (r2 - r1)), int(g1 + f * (g2 - g1)), int(b1 + f * (b2 - b1))
 
     def set_textures(self,filename1, filename2):
 
@@ -219,7 +230,7 @@ class OpenGLScene(object):
         GL.glTranslate(*self.tb.trans)
         GL.glMultMatrixf(self.tb.matrix)
         GL.glDisable(GL.GL_TEXTURE_2D)
-        GL.glDisable(GL.GL_LIGHTING)
+        # GL.glDisable(GL.GL_LIGHTING)
         skel = sim.skeletons[-1]
         loc = skel.q
         # print(loc)
@@ -240,12 +251,18 @@ class OpenGLScene(object):
         # GL.glEnable(GL.GL_TEXTURE_2D)
         GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
         GL.glMultMatrixf(skel.bodynodes[0].T.T)
+        colors = [(0, 0, 255), (0, 255, 0), (255, 0, 0)]
+        r, g, b = self.convert_to_rgb(1, 3, skel.bodynodes[0].mass(), colors)
+        GL.glColor3f(r/255., b/255., g/255.)
         self.renderer.render_box((0.025, 0, 0), (1, 1, 1), (0.05, 0.01, 0.01))
         # bod.shapenodes[0].shape.render()
         GL.glLoadIdentity()
         GL.glTranslate(*self.tb.trans)
         GL.glMultMatrixf(self.tb.matrix)
         GL.glMultMatrixf(skel.bodynodes[1].T.T)
+        colors = [(0, 0, 255), (0, 255, 0), (255, 0, 0)]
+        r, g, b = self.convert_to_rgb(1, 3, skel.bodynodes[1].mass(), colors)
+        GL.glColor3f(r/255., b/255., g/255.)
         self.renderer.render_box((-0.025, 0, 0), (1, 1, 1), (0.05, 0.01, 0.01))
         # skel.bodynodes[1].shapenodes[1].shape.render()
         # if sim is None:

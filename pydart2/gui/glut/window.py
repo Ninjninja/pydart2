@@ -60,7 +60,7 @@ class Simulate:
 
 
 class GLUTWindow(object):
-    def __init__(self, sim, title,frame_num):
+    def __init__(self, sim, title, frame_num):
         # self.sim1 = deepcopy(sim)
         for root, dirs, files in os.walk('/home/niranjan/Projects/datasets/ETH_Synthesizability/texture',
                                          topdown=False):
@@ -70,6 +70,7 @@ class GLUTWindow(object):
         self.simulation_num = 0
         self.sim = sim
         self.skel = self.sim.skeletons[-1]
+        self.skel.friction = 0.7
         self.loc = self.skel.q
         self.set_parm()
         # self.skel.controller = Simulate(self.skel, mass=self.parm['mass'], friction=self.parm['friction'], force=self.parm['force'])
@@ -85,7 +86,7 @@ class GLUTWindow(object):
         self.is_animating = True
         self.frame_index = 0
         self.capture_index = 0
-        self.folder_name = "/home/niranjan/Projects/datasets/push_arti/"
+        self.folder_name = "/home/niranjan/Projects/datasets/push_arti2/"
         self.stop = 0
         self.seg_mode = 0
 
@@ -110,9 +111,10 @@ class GLUTWindow(object):
 
         bod.add_ext_force(np.array([x*10000, 0, y*10000]), np.array([offset[0], 0, offset[1]]))
 
-        m = np.random.uniform(1, 3)
-        self.skel.bodynodes[0].set_mass(m)
-        self.skel.bodynodes[1].set_mass(m)
+        m0 = np.random.uniform(1, 3)
+        m1 = np.random.uniform(1, 3)
+        self.skel.bodynodes[0].set_mass(m0)
+        self.skel.bodynodes[1].set_mass(m1)
         self.filename2 = os.path.join(self.root, self.files[np.random.randint(len(self.files))])
         self.filename1 = os.path.join(self.root, self.files[np.random.randint(len(self.files))])
         print(self.filename2,self.filename1)
@@ -120,7 +122,7 @@ class GLUTWindow(object):
             # print('Entered')
             self.scene.set_textures(self.filename1, self.filename2)
         # force = 10 * force_direction
-        self.parm = {'mass': m, 'friction': 0.7, 'force': 10}
+        self.parm = {'mass': m0, 'friction': 0.7, 'force': 10}
 
     def convert_to_rgb(self, minval, maxval, val, colors):
         fi = float(val - minval) / float(maxval - minval) * (len(colors) - 1)
@@ -330,20 +332,20 @@ class GLUTWindow(object):
             mass = self.skel.bodynodes[0].mass()
             cimg = np.array(img)
             cimg = cimg[:,:,:3]
-            idx = cimg[:, :, 0] < 250
-            colors = [(0, 0, 255), (0, 255, 0), (255, 0, 0)]
-            r, g, b = self.convert_to_rgb(1, 3, mass, colors)
-            print(r,g,b,mass)
-            cimg[idx, 0] = r
-            cimg[idx, 1] = g
-            cimg[idx, 2] = b
-            cimg[~idx, 0] = 0
-            cimg[~idx, 1] = 0
-            cimg[~idx, 2] = 0
+            # idx = cimg[:, :, 0] < 250
+            # colors = [(0, 0, 255), (0, 255, 0), (255, 0, 0)]
+            # r, g, b = self.convert_to_rgb(1, 3, mass, colors)
+            # print(r,g,b,mass)
+            # cimg[idx, 0] = r
+            # cimg[idx, 1] = g
+            # cimg[idx, 2] = b
+            # cimg[~idx, 0] = 0
+            # cimg[~idx, 1] = 0
+            # cimg[~idx, 2] = 0
             img = Image.fromarray(cimg)
             filename = "%01d.png" % self.simulation_num
             # img.save(filename, 'png')
-            self.image3 = img
+            self.image3 = cimg
             # self.image3 = img1.transpose(Image.FLIP_TOP_BOTTOM)
             imgf = Image.fromarray(np.concatenate((np.asarray(self.image1)[:,:,:3], np.asarray(self.image2)[:,:,:3], np.asarray(self.image3)[:,:,:3]), 1))
             imgf = imgf.resize((256*3, 256), Image.ANTIALIAS)
