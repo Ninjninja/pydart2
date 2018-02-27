@@ -92,11 +92,14 @@ class GLUTWindow(object):
 
 
     def set_parm(self):
+        print(self.skel.q)
         self.simulation_num += 1
         loc1 = np.random.normal(0, 0.1, 2)
         loc= self.loc*0
         loc[3] = loc1[0]
+        loc[6] = loc1[1]*10
         # loc[5] = loc1[0]
+        print(loc)
         self.skel.set_positions(loc)
         x = np.random.uniform(-1, 1)
         y = np.random.uniform(-1, 1)
@@ -109,7 +112,7 @@ class GLUTWindow(object):
 
         bod = self.skel.bodynodes[np.random.randint(0,1)]
 
-        bod.add_ext_force(np.array([x*10000, 0, y*10000]), np.array([offset[0], 0, offset[1]]))
+        bod.add_ext_force(np.array([x*5000, 0, y*5000]), np.array([offset[0], 0, offset[1]]))
 
         m0 = np.random.uniform(1, 3)
         m1 = np.random.uniform(1, 3)
@@ -155,8 +158,8 @@ class GLUTWindow(object):
            # GLUT.glutSolidSphere(0.02, 20, 20)  # Default object for debugging
             #GL.glTranslated(0.0, 0, -1)
             #self.scene.renderer.draw_image(0, 0)
-            # GLUT.glutSwapBuffers()
-            GL.glFinish()
+            GLUT.glutSwapBuffers()
+            # GL.glFinish()
             # if self.frame_num == self.capture_index:
             #     return
         else:
@@ -164,8 +167,8 @@ class GLUTWindow(object):
             GL.glColor3f(0.0, 0.0, 1.0)
             self.scene.render_seg(self.sim)
             # GLUT.glutSolidSphere(0.3, 20, 20)  # Default object for debugging
-            # GLUT.glutSwapBuffers()
-            GL.glFinish()
+            GLUT.glutSwapBuffers()
+            # GL.glFinish()
         if self.render:
             self.render = False
             GLUT.glutTimerFunc(100, self.record_frames, 1)
