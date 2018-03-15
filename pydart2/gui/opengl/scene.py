@@ -113,7 +113,8 @@ class OpenGLScene(object):
             return
 
         if hasattr(sim, "render"):
-            sim.render()
+            sim.render(render_markers=False,
+               render_contacts=False,)
 
         self.renderer.enable("COLOR_MATERIAL")
         if hasattr(sim, "render_with_ri"):
