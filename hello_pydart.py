@@ -19,10 +19,12 @@ if __name__ == '__main__':
     #world.set_gravity([0, -9.8, 0])
     print('pydart create_world OK')
     # pydart.gui.viewer.launch(world)
-    # skel = world.skeletons[-1]
+    skel = world.skeletons[-1]
+    bod = skel.root_bodynode()
+    bod.add_ext_force(np.array([0,0,1400]))
     # skel.friction = 0.9
     #skel.q = (np.random.rand(skel.ndofs))
-    #skel.set_forces(np.array([0, 0, 0, 100, 0, 0]))
+    # skel.set_forces(np.array([0, 0, 100, 100, 0, 0]))
     #skel.set_accelerations([0, 5, 0])
     #print(skel.tau)
     #print(skel.friction)
